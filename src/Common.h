@@ -92,7 +92,8 @@ extern void* GlobalAssertHandlerData;
 #define log_print(fmt, ...) _GlobalLoggerWithArgs(GlobalLoggerData, fmt, ##__VA_ARGS__)
 #define assert(expr, ...) do { if (!(expr)) {_GlobalAssertHandler(GlobalAssertHandlerData, __FILE__, __func__, __LINE__, #expr, ##__VA_ARGS__);}} while(false)
 // NOTE: Defined always
-#define panic(expr, ...) do { if (!(expr)) {_GlobalAssertHandler(GlobalAssertHandlerData, __FILE__, __func__, __LINE__, #expr, ##__VA_ARGS__);}} while(false)
+
+#define panic(...) _GlobalAssertHandler(GlobalAssertHandlerData, __FILE__, __func__, __LINE__, "PANIC", ##__VA_ARGS__)
 
 inline void _GlobalLoggerWithArgs(void* data, const char* fmt, ...) {
     va_list args;
