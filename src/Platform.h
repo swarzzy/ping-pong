@@ -78,9 +78,10 @@ enum struct MouseButton : u8
 enum struct Key : u8
 {
     Invalid = 0x00,
-    // NOTE: currently works only ctrl for both left and right keys
-    // right ctrl and super key doesn`t work on linux.
-    Ctrl, Space, Apostrophe, Comma,
+    LeftCtrl, RightCtrl,
+    LeftShift, RightShift,
+    LeftAlt, RightAlt,
+    Space, Apostrophe, Comma,
     Minus, Period, Slash, _0 = 0x30,
     _1, _2, _3, _4, _5, _6, _7, _8,
     _9, Semicolon, Equal, A = 0x41,
@@ -104,10 +105,8 @@ enum struct Key : u8
     Num7, Num8, Num9, NumDecimal,
     NumDivide, NumMultiply, NumSubtract,
     NumAdd, NumEnter = Enter,
-    LeftShift = 153, LeftCtrl, Alt,
-    LeftSuper, Menu, RightShift,
-    RightCtrl, RightSuper, Clear,
-    Shift
+    LeftSuper, Menu,
+    RightSuper, Clear, _Count
 };
 
 // NOTE: Input state that also gets passed to the game by platform
