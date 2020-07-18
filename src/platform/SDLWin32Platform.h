@@ -5,6 +5,9 @@
 
 #include <Windows.h>
 
+// For timeBeginPeriod
+#include <mmsystem.h>
+
 #include "../Common.h"
 #include "../Platform.h"
 
@@ -31,5 +34,14 @@ struct Win32Context {
     SDL_Surface* surface;
     SDL_GLContext glContext;
 
+    LARGE_INTEGER performanceFrequency;
+
+    // Internal. Should not be used. Use values from PlatformState.input
+    i32 mousePosX;
+    i32 mousePosY;
+
     u8 keyTable[InputState::KeyCount];
 };
+
+const char* ToString(Key keycode);
+const char* ToString(MouseButton button);
