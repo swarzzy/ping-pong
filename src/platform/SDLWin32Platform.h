@@ -36,6 +36,8 @@ struct Win32Context {
 
     LARGE_INTEGER performanceFrequency;
 
+    LibraryData gameLib;
+
     // Internal. Should not be used. Use values from PlatformState.input
     i32 mousePosX;
     i32 mousePosY;

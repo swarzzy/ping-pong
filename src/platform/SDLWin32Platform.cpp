@@ -3,6 +3,12 @@
 #include <SDL_opengl.h>
 #include <SDL_keycode.h>
 
+// Forcing the app to use discrete graphics adpter by default
+#if defined (DISCRETE_GRAPHICS_DEFAULT)
+extern "C" { __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
+extern "C" { __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x01; }
+#endif
+
 // TODO: Logger
 void Logger(void* data, const char* fmt, va_list* args) {
     vprintf(fmt, *args);
@@ -22,6 +28,7 @@ AssertHandlerFn* GlobalAssertHandler = AssertHandler;
 void* GlobalAssertHandlerData = nullptr;
 
 static Win32Context GlobalContext;
+static void* GlobalGameData;
 
 Key SDLKeycodeConvert(i32 sdlKeycode);
 MouseButton SDLMouseButtonConvert(u8 button);
@@ -149,6 +156,15 @@ void PollEvents(Win32Context* context) {
     }
 }
 
+f64 GetTimeStamp() {
+    f64 time = 0.0;
+    LARGE_INTEGER currentTime = {};
+    if (QueryPerformanceCounter(&currentTime)) {
+        time = (f64)(currentTime.QuadPart) / (f64)GlobalContext.performanceFrequency.QuadPart;
+    }
+    return time;
+}
+
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCmd)
 {
 #if defined(ENABLE_CONSOLE)
@@ -202,23 +218,56 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, in
         panic("[SDL] Failed to initialize OpenGL context-> %s", SDL_GetError());
     }
 
+    bool vSyncSupported = true;
     if (SDL_GL_SetSwapInterval(1) != 0) {
         log_print("[SDL] Warning! V-sync is not supported\n");
+        vSyncSupported = false;
     }
 
-    while (context->running) {
-        PollEvents(context);
+    if (!UpdateGameCode(&context->gameLib)) {
+        panic("[Platform] Failed to load game library");
+    }
 
-        if (GlobalContext.state.input.mouseButtons[(u32)MouseButton::Left].pressedNow) {
-            glClearColor(0.3f, 0.7f, 0.0f, 1.0f);
-        } else {
-            glClearColor(0.7f, 0.3f, 0.0f, 1.0f);
+    // Init the game
+    context->gameLib.GameUpdateAndRender(&context->state, GameInvoke::Init, &GlobalGameData);
+
+    while (context->running) {
+        auto frameStartTime = GetTimeStamp();
+        context->state.tickCount++;
+
+        // Reload game lib if it was updated
+        bool codeReloaded = UpdateGameCode(&context->gameLib);
+        if (codeReloaded) {
+            context->gameLib.GameUpdateAndRender(&context->state, GameInvoke::Reload, &GlobalGameData);
         }
 
-        //glClearColor(1.0f, 0.4f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // TODO(swarzzy): For now we do ONE update per frame with variable delta time.
+        // This is not a good solution. We probably need to do updates with fixed timestep
+        // with higher frequency (for example 120Hz)
+
+        PollEvents(context);
+
+        context->gameLib.GameUpdateAndRender(&context->state, GameInvoke::Update, &GlobalGameData);
+
+        for (u32 keyIndex = 0; keyIndex < InputState::KeyCount; keyIndex ++) {
+            context->state.input.keys[keyIndex].wasPressed = context->state.input.keys[keyIndex].pressedNow;
+        }
+
+        for (u32 mbIndex = 0; mbIndex < InputState::MouseButtonCount; mbIndex++) {
+            context->state.input.mouseButtons[mbIndex].wasPressed = context->state.input.mouseButtons[mbIndex].pressedNow;
+        }
+
+        context->gameLib.GameUpdateAndRender(&context->state, GameInvoke::Render, &GlobalGameData);
 
         SDL_GL_SwapWindow(context->window);
+
+        auto frameEndTime = GetTimeStamp();
+        auto frameTime = frameEndTime - frameStartTime;
+
+        // If framerate lower than 15 fps just clamping delta time
+        context->state.deltaTime = (f32)Clamp(1.0 / frameTime, 0.0, 0.066);
+        context->state.fps = (i32)(1.0f / context->state.deltaTime);
+        context->state.ups = context->state.fps;
     }
 
     // TODO(swarzzy): Is that necessary?
@@ -501,3 +550,5 @@ const char* ToString(MouseButton button) {
     // Dummy return for the compiler
     return "Unknown";
 }
+
+#include "Win32CodeLoader.cpp"

@@ -15,7 +15,9 @@ set DebugCompilerFlags=/Od /RTC1 /MTd /Fd%BinOutDir%\
 set ReleaseCompilerFlags=/O2 /MT
 set SDLDependencies=build/SDL2d.lib shell32.lib version.lib imm32.lib ole32.lib oleaut32.lib advapi32.lib setupapi.lib
 set PlatformLinkerFlags=/INCREMENTAL:NO /OPT:REF /MACHINE:X64 /NOIMPLIB %SDLDependencies% user32.lib gdi32.lib opengl32.lib winmm.lib /OUT:%BinOutDir%\win32_pong.exe /PDB:%BinOutDir%\win32_pong.pdb
-set GameLinkerFlags=/INCREMENTAL:NO /OPT:REF /MACHINE:X64 /DLL /OUT:%BinOutDir%\pong.dll  /PDB:%BinOutDir%\pong_%PdbMangleVal%.pdb
+rem set GameLinkerFlags=/INCREMENTAL:NO /OPT:REF /MACHINE:X64 /DLL /OUT:%BinOutDir%\pong.dll  /PDB:%BinOutDir%\pong_%PdbMangleVal%.pdb
+set GameLinkerFlags=/INCREMENTAL:NO /OPT:REF /MACHINE:X64 /DLL /OUT:%BinOutDir%\pong.dll  /PDB:%BinOutDir%\pong.pdb
+
 
 
 set ConfigCompilerFlags=%DebugCompilerFlags%
