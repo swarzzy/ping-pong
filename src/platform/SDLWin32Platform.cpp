@@ -41,8 +41,8 @@ OpenGLLoadResult LoadOpenGL() {
         panic("Failed to allocate memory for OpenGL function table");
     }
 
-    log_print("[Info] Loading OpenGL functions...\n");
-    log_print("[Info] Functions defined: %d\n", (int)OpenGL::FunctionCount);
+    log_print("[OpenGL] Loading functions...\n");
+    log_print("[OpenGL] Functions defined: %d\n", (int)OpenGL::FunctionCount);
 
     b32 success = true;
     for (u32 i = 0; i < OpenGL::FunctionCount; i++) {
@@ -52,15 +52,15 @@ OpenGLLoadResult LoadOpenGL() {
 
         context->functions.raw[i] = SDL_GL_GetProcAddress(OpenGL::FunctionNames[i]);
         if (!context->functions.raw[i]) {
-            log_print("\n[Platform]: Failed to load OpenGL procedure: %s", OpenGL::FunctionNames[i]);
+            log_print("[OpenGL]: Failed to load function: %s\n", OpenGL::FunctionNames[i]);
             success = false;
         }
     }
 
     if (success) {
-        log_print("\nDone\n");
+        log_print("[OpenGL] Done\n");
     } else {
-        log_print("\nFailed to load some of OpenGL functions\n");
+        log_print("[OpenGL] Failed to load some of OpenGL functions\n");
     }
 
     return {context, success};

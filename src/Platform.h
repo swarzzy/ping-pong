@@ -8,7 +8,8 @@
 #include "Common.h"
 #include "Intrinsics.h"
 #include "Math.h"
-#include "platform/OpenGL.h"
+
+struct OpenGL;
 
 #if defined(PLATFORM_WINDOWS)
 #define GAME_CODE_ENTRY __declspec(dllexport)

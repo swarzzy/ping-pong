@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "Platform.h"
 #include "Math.h"
+#include "platform/OpenGL.h"
 
 // NOTE: Logger and assert handler implementation
 // TODO: Implement!
@@ -29,19 +30,22 @@ static PlatformState* _GlobalPlatformState;
 #define glViewport gl_function(glViewport)
 
 // Shortcuts for platform functions
-#define platfrom_call(func) _GlobalPlatformState->functions. func
+// For declarations see Platform.h
+#define platform_call(func) _GlobalPlatformState->functions. func
 
-#define PlatformDebugGetFileSize platform_call(DebugGetFileSize);
-#define PlatformDebugReadFile platform_call(DebugReadFile);
-#define PlatformDebugReadTextFile platform_call(DebugReadTextFile);
-#define PlatformDebugWriteFile platform_call(DebugWriteFile);
-#define PlatformDebugOpenFile platform_call(DebugOpenFile);
-#define PlatformDebugCloseFile platform_call(DebugCloseFile);
-#define PlatformDebugCopyFile platform_call(DebugCopyFile);
-#define PlatformDebugWriteToOpenedFile platform_call(DebugWriteToOpenedFile);
-#define PlatformAllocate platform_call(Allocate);
-#define PlatformDeallocate platform_call(Deallocate);
-#define PlatformReallocate platform_call(Reallocate);
+#define PlatformDebugGetFileSize platform_call(DebugGetFileSize)
+#define PlatformDebugReadFile platform_call(DebugReadFile)
+#define PlatformDebugReadTextFile platform_call(DebugReadTextFile)
+#define PlatformDebugWriteFile platform_call(DebugWriteFile)
+#define PlatformDebugOpenFile platform_call(DebugOpenFile)
+#define PlatformDebugCloseFile platform_call(DebugCloseFile)
+#define PlatformDebugCopyFile platform_call(DebugCopyFile)
+#define PlatformDebugWriteToOpenedFile platform_call(DebugWriteToOpenedFile)
+
+// Allocator declaraions are in Common.h
+#define PlatformAllocate platform_call(Allocate)
+#define PlatformDeallocate platform_call(Deallocate)
+#define PlatformReallocate platform_call(Reallocate)
 
 #include "Game.h"
 

@@ -6,6 +6,8 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
+#include "OpenGL.h"
+
 #include <SDL_opengl.h>
 #include <SDL_keycode.h>
 

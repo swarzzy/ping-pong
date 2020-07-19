@@ -237,11 +237,10 @@ extern "C"
 #define APIENTRYP APIENTRY *
 #endif
 #ifndef GLAPI
+// Fixing weird SDL stuff on clang
+#if defined(COMPILER_MSVC)
 #define GLAPI extern
 #endif
-
-#ifndef GLAPI
-#define GLAPI extern
 #endif
 
 #ifndef GL_VERSION_1_0

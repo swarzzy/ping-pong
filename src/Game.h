@@ -5,6 +5,10 @@
 
 // NOTE: All global game stuff lives here
 struct GameContext {
+    // Dummy stuff for demonstration how everything works
+    void* someData;
+    v4 color1;
+    v4 color2;
 };
 
 void GameInit();
