@@ -23,14 +23,23 @@ enum struct GameInvoke : u32
     Init, Reload, Update, Render
 };
 
-// NOTE: On unix API this should be defined as int
+#if defined(PLATFORM_WINDOWS)
 typedef uptr FileHandle;
 const FileHandle InvalidFileHandle = Uptr::Max;
+#else
+typedef int FileHandle;
+#endif
+
 
 // TODO: Is using wchar here a good idea?
 // For accessing in-game resources just char versoins will be enough
 typedef u32(DebugGetFileSizeFn)(const wchar_t* filename);
+
+// Read file contents to buffer of size bufferSize. If buffer is too small, it will
+// read only that number of bits which will fit in the buffer
 typedef u32(DebugReadFileFn)(void* buffer, u32 bufferSize, const wchar_t* filename);
+
+// Read whole file to buffer and null terminate it
 typedef u32(DebugReadTextFileFn)(void* buffer, u32 bufferSize, const wchar_t* filename);
 typedef bool(DebugWriteFileFn)(const wchar_t* filename, void* data, u32 dataSize);
 typedef b32(DebugCopyFileFn)(const wchar_t* source, const wchar_t* dest, bool overwrite);

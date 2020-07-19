@@ -21,4 +21,4 @@ GameLinkerFlags=""
 ConfigCompilerFlags=$DebugCompilerFlags
 
 clang++ -save-temps=obj -DPLATFORM_CODE -o $BinOutDir/win32_pong.exe $CommonDefines $IncludeDirs $CommonCompilerFlags $ConfigCompilerFlags src/platform/SDLWin32Platform.cpp $SDLDependencies $PlatformLinkerFlags
-clang++ -save-temps=obj -o $BinOutDir/pong.dll $CommonDefines $IncludeDirs $CommonCompilerFlags $ConfigCompilerFlags src/Game.cpp -shared  $GameLinkerFlags
+clang++ -save-temps=obj -o $BinOutDir/pong.dll $CommonDefines $IncludeDirs $CommonCompilerFlags $ConfigCompilerFlags src/GameEntry.cpp -shared  $GameLinkerFlags

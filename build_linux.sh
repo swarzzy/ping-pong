@@ -20,4 +20,4 @@ GameLinkerFlags=""
 ConfigCompilerFlags=$DebugCompilerFlags
 
 clang++ -save-temps=obj -DPLATFORM_CODE -o $BinOutDir/linux_pong $CommonDefines $IncludeDirs $CommonCompilerFlags $ConfigCompilerFlags src/platform/SDLLinuxPlatform.cpp $PlatformLinkerFlags
-clang++ -save-temps=obj -o $BinOutDir/pong.so $CommonDefines $IncludeDirs $CommonCompilerFlags $ConfigCompilerFlags src/Game.cpp -shared  $GameLinkerFlags
+clang++ -save-temps=obj -o $BinOutDir/pong.so $CommonDefines $IncludeDirs $CommonCompilerFlags $ConfigCompilerFlags src/GameEntry.cpp -shared  $GameLinkerFlags
