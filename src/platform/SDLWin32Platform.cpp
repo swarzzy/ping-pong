@@ -46,7 +46,7 @@ f64 GetTimeStamp() {
 
 u32 DebugGetFileSize(const char* filename) {
     u32 fileSize = 0;
-    HANDLE handle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, 0,
+    HANDLE handle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, 0,
                                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (handle != INVALID_HANDLE_VALUE) {
         DWORD sz = (u32)GetFileSize(handle, 0);
@@ -63,7 +63,7 @@ u32 DebugGetFileSize(const char* filename) {
 u32 DebugReadFileToBuffer(void* buffer, u32 bufferSize, const char* filename) {
     u32 written = 0;
     LARGE_INTEGER fileSize = {0};
-    HANDLE fileHandle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    HANDLE fileHandle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (fileHandle != INVALID_HANDLE_VALUE) {
         if (GetFileSizeEx(fileHandle, &fileSize)) {
             DWORD readSize = (DWORD)bufferSize;
@@ -90,7 +90,7 @@ u32 DebugReadTextFileToBuffer(void* buffer, u32 bufferSize, const char* filename
     u32 bytesRead = 0;
     char* string = nullptr;
     LARGE_INTEGER fileSize = {};
-    HANDLE fileHandle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    HANDLE fileHandle = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     if (fileHandle != INVALID_HANDLE_VALUE) {
         if (GetFileSizeEx(fileHandle, &fileSize)) {
             if (fileSize.QuadPart + 1 > bufferSize) {
@@ -116,7 +116,7 @@ u32 DebugReadTextFileToBuffer(void* buffer, u32 bufferSize, const char* filename
 }
 
 b32 DebugWriteFile(const char* filename, void* data, u32 dataSize) {
-    HANDLE fileHandle = CreateFile(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+    HANDLE fileHandle = CreateFileA(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
     if (fileHandle != INVALID_HANDLE_VALUE) {
         DWORD bytesWritten;
         BOOL writeResult = WriteFile(fileHandle, data,
@@ -133,7 +133,7 @@ b32 DebugWriteFile(const char* filename, void* data, u32 dataSize) {
 
 FileHandle DebugOpenFile(const char* filename) {
     FileHandle result = InvalidFileHandle;
-    HANDLE w32Handle = CreateFile(filename, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ, 0, CREATE_NEW, 0, 0);
+    HANDLE w32Handle = CreateFileA(filename, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ, 0, CREATE_NEW, 0, 0);
     if (w32Handle != INVALID_HANDLE_VALUE) {
         result = (FileHandle)w32Handle;
     }
@@ -158,9 +158,9 @@ u32 DebugWriteToOpenedFile(FileHandle handle, void* data, u32 size) {
     return result;
 }
 
-b32 DebugCopyFile(const char* source, const char* dest, bool overwrite) {
+b32 DebugCopyFile(const char* source, const char* dest, b32 overwrite) {
     BOOL failIfExists = overwrite ? FALSE : TRUE;
-    auto result = CopyFile(source, dest, failIfExists);
+    auto result = CopyFileA(source, dest, failIfExists);
     return (b32)result;
 }
 
