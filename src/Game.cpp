@@ -9,8 +9,8 @@ void GameInit() {
     // so passing nullptr
     context->someData = PlatformAllocate(1024, 0, nullptr);
 
-    context->color1 = V4(0.7f, 0.4f, 0.0f, 1.0f);
-    context->color2 = V4(0.4f, 0.7f, 0.0f, 1.0f);
+    context->color1 = V4(0.2f, 0.4f, 0.0f, 1.0f);
+    context->color2 = V4(0.1f, 0.7f, 0.0f, 1.0f);
 }
 
 void GameReload() {

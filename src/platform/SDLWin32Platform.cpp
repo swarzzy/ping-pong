@@ -35,37 +35,6 @@ void* GlobalAssertHandlerData = nullptr;
 static Win32Context GlobalContext;
 static void* GlobalGameData;
 
-OpenGLLoadResult LoadOpenGL() {
-    OpenGL* context = (OpenGL*)VirtualAlloc(0, sizeof(OpenGL), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    if (!context) {
-        panic("Failed to allocate memory for OpenGL function table");
-    }
-
-    log_print("[OpenGL] Loading functions...\n");
-    log_print("[OpenGL] Functions defined: %d\n", (int)OpenGL::FunctionCount);
-
-    b32 success = true;
-    for (u32 i = 0; i < OpenGL::FunctionCount; i++) {
-
-        // NOTE(swarzzy): SDL_GL_GetProcAddress by itself tries to load a functions
-        // using wglGetProcAddress or GetProcAddress if the first fails
-
-        context->functions.raw[i] = SDL_GL_GetProcAddress(OpenGL::FunctionNames[i]);
-        if (!context->functions.raw[i]) {
-            log_print("[OpenGL]: Failed to load function: %s\n", OpenGL::FunctionNames[i]);
-            success = false;
-        }
-    }
-
-    if (success) {
-        log_print("[OpenGL] Done\n");
-    } else {
-        log_print("[OpenGL] Failed to load some of OpenGL functions\n");
-    }
-
-    return {context, success};
-}
-
 f64 GetTimeStamp() {
     f64 time = 0.0;
     LARGE_INTEGER currentTime = {};
@@ -75,9 +44,9 @@ f64 GetTimeStamp() {
     return time;
 }
 
-u32 DebugGetFileSize(const wchar_t* filename) {
+u32 DebugGetFileSize(const char* filename) {
     u32 fileSize = 0;
-    HANDLE handle = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, 0,
+    HANDLE handle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, 0,
                                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (handle != INVALID_HANDLE_VALUE) {
         DWORD sz = (u32)GetFileSize(handle, 0);
@@ -91,10 +60,10 @@ u32 DebugGetFileSize(const wchar_t* filename) {
     return fileSize;
 }
 
-u32 DebugReadFileToBuffer(void* buffer, u32 bufferSize, const wchar_t* filename) {
+u32 DebugReadFileToBuffer(void* buffer, u32 bufferSize, const char* filename) {
     u32 written = 0;
     LARGE_INTEGER fileSize = {0};
-    HANDLE fileHandle = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+    HANDLE fileHandle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (fileHandle != INVALID_HANDLE_VALUE) {
         if (GetFileSizeEx(fileHandle, &fileSize)) {
             DWORD readSize = (DWORD)bufferSize;
@@ -116,11 +85,12 @@ u32 DebugReadFileToBuffer(void* buffer, u32 bufferSize, const wchar_t* filename)
     return written;
 }
 
-u32 DebugReadTextFileToBuffer(void* buffer, u32 bufferSize, const wchar_t* filename) {
+// TODO:(swarzzy) Rewrite rhis to match Unix implementation behavior
+u32 DebugReadTextFileToBuffer(void* buffer, u32 bufferSize, const char* filename) {
     u32 bytesRead = 0;
     char* string = nullptr;
     LARGE_INTEGER fileSize = {};
-    HANDLE fileHandle = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    HANDLE fileHandle = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     if (fileHandle != INVALID_HANDLE_VALUE) {
         if (GetFileSizeEx(fileHandle, &fileSize)) {
             if (fileSize.QuadPart + 1 > bufferSize) {
@@ -145,8 +115,8 @@ u32 DebugReadTextFileToBuffer(void* buffer, u32 bufferSize, const wchar_t* filen
     return bytesRead;
 }
 
-bool DebugWriteFile(const wchar_t* filename, void* data, u32 dataSize) {
-    HANDLE fileHandle = CreateFileW(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+b32 DebugWriteFile(const char* filename, void* data, u32 dataSize) {
+    HANDLE fileHandle = CreateFile(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
     if (fileHandle != INVALID_HANDLE_VALUE) {
         DWORD bytesWritten;
         BOOL writeResult = WriteFile(fileHandle, data,
@@ -161,16 +131,16 @@ bool DebugWriteFile(const wchar_t* filename, void* data, u32 dataSize) {
     return false;
 }
 
-FileHandle DebugOpenFile(const wchar_t* filename) {
+FileHandle DebugOpenFile(const char* filename) {
     FileHandle result = InvalidFileHandle;
-    HANDLE w32Handle = CreateFileW(filename, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ, 0, CREATE_NEW, 0, 0);
+    HANDLE w32Handle = CreateFile(filename, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ, 0, CREATE_NEW, 0, 0);
     if (w32Handle != INVALID_HANDLE_VALUE) {
         result = (FileHandle)w32Handle;
     }
     return result;
 }
 
-bool DebugCloseFile(FileHandle handle) {
+b32 DebugCloseFile(FileHandle handle) {
     bool result = false;
     if (CloseHandle((HANDLE)handle)) {
         result = true;
@@ -188,7 +158,7 @@ u32 DebugWriteToOpenedFile(FileHandle handle, void* data, u32 size) {
     return result;
 }
 
-b32 DebugCopyFile(const wchar_t* source, const wchar_t* dest, bool overwrite) {
+b32 DebugCopyFile(const char* source, const char* dest, bool overwrite) {
     BOOL failIfExists = overwrite ? FALSE : TRUE;
     auto result = CopyFile(source, dest, failIfExists);
     return (b32)result;
@@ -241,7 +211,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, in
     SDLInit(&context->sdl, &context->state, OPENGL_MAJOR_VERSION, OPENGL_MINOR_VERSION);
 
     // Loading OpenGL
-    OpenGLLoadResult glResult = LoadOpenGL();
+    OpenGLLoadResult glResult = SDLLoadOpenGL();
     if (!glResult.success) {
         panic("Failed to load OpenGL functions");
     }
@@ -275,6 +245,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, in
         // Reload game lib if it was updated
         bool codeReloaded = UpdateGameCode(&context->gameLib);
         if (codeReloaded) {
+            log_print("[Platform] Game was hot-reloaded\n");
             context->gameLib.GameUpdateAndRender(&context->state, GameInvoke::Reload, &GlobalGameData);
         }
 

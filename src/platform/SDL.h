@@ -23,8 +23,15 @@ struct SDLContext {
     i32 mousePosY;
 };
 
+struct OpenGLLoadResult {
+    OpenGL* context;
+    b32 success;
+};
+
 Key SDLKeycodeConvert(i32 sdlKeycode);
 MouseButton SDLMouseButtonConvert(u8 button);
+
+OpenGLLoadResult SDLLoadOpenGL();
 
 void SDLInit(SDLContext* context, const PlatformState* platform, i32 glMajorVersion, i32 glMinorVersion);
 

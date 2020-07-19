@@ -29,24 +29,25 @@ typedef uptr FileHandle;
 const FileHandle InvalidFileHandle = Uptr::Max;
 #else
 typedef int FileHandle;
+const FileHandle InvalidFileHandle = -1;
 #endif
 
 
-// TODO: Is using wchar here a good idea?
 // For accessing in-game resources just char versoins will be enough
-typedef u32(DebugGetFileSizeFn)(const wchar_t* filename);
+typedef u32(DebugGetFileSizeFn)(const char* filename);
 
 // Read file contents to buffer of size bufferSize. If buffer is too small, it will
-// read only that number of bits which will fit in the buffer
-typedef u32(DebugReadFileFn)(void* buffer, u32 bufferSize, const wchar_t* filename);
+// read only that number of bits which will fit in the buffer.
+// Returns number of bytes written to the buffer
+typedef u32(DebugReadFileFn)(void* buffer, u32 bufferSize, const char* filename);
 
 // Read whole file to buffer and null terminate it
-typedef u32(DebugReadTextFileFn)(void* buffer, u32 bufferSize, const wchar_t* filename);
-typedef bool(DebugWriteFileFn)(const wchar_t* filename, void* data, u32 dataSize);
-typedef b32(DebugCopyFileFn)(const wchar_t* source, const wchar_t* dest, bool overwrite);
+typedef u32(DebugReadTextFileFn)(void* buffer, u32 bufferSize, const char* filename);
+typedef b32(DebugWriteFileFn)(const char* filename, void* data, u32 dataSize);
+typedef b32(DebugCopyFileFn)(const char* source, const char* dest, b32 overwrite);
 
-typedef FileHandle(DebugOpenFileFn)(const wchar_t* filename);
-typedef bool(DebugCloseFileFn)(FileHandle handle);
+typedef FileHandle(DebugOpenFileFn)(const char* filename);
+typedef b32(DebugCloseFileFn)(FileHandle handle);
 typedef u32(DebugWriteToOpenedFileFn)(FileHandle handle, void* data, u32 size);
 
 // NOTE: Functions that platform passes to the game

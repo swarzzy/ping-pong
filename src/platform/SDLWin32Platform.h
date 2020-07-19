@@ -21,11 +21,6 @@
 const u32 DefaultWindowWidth = 1280;
 const u32 DefaultWindowHeight = 720;
 
-struct OpenGLLoadResult {
-    OpenGL* context;
-    b32 success;
-};
-
 struct Win32Context {
     PlatformState state;
 
