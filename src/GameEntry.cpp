@@ -4,13 +4,17 @@
 #include "platform/OpenGL.h"
 
 // NOTE: Logger and assert handler implementation
-// TODO: Implement!
-void Logger(void* loggerData, const char* fmt, va_list* args) {
-
+// TODO: Logger
+void Logger(void* data, const char* fmt, va_list* args) {
+    vprintf(fmt, *args);
 }
 
-void AssertHandler(void* userData, const char* file, const char* func, u32 line, const char* exprString, const char* fmt, va_list* args) {
-
+inline void AssertHandler(void* data, const char* file, const char* func, u32 line, const char* assertStr, const char* fmt, va_list* args) {
+    log_print("[Assertion failed] Expression (%s) result is false\nFile: %s, function: %s, line: %d.\n", assertStr, file, func, (int)line);
+    if (args) {
+        GlobalLogger(GlobalLoggerData, fmt, args);
+    }
+    debug_break();
 }
 
 // Setup logger and assert handler
