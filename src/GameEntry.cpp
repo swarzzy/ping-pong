@@ -32,6 +32,33 @@ static PlatformState* _GlobalPlatformState;
 #define glClear gl_function(glClear)
 #define glClearColor gl_function(glClearColor)
 #define glViewport gl_function(glViewport)
+#define glGenVertexArrays gl_function(glGenVertexArrays)
+#define glBindVertexArray gl_function(glBindVertexArray)
+#define glEnable gl_function(glEnable)
+#define glDepthFunc gl_function(glDepthFunc)
+#define glCullFace gl_function(glCullFace)
+#define glFrontFace gl_function(glFrontFace)
+#define glGenBuffers gl_function(glGenBuffers)
+#define glBindBuffer gl_function(glBindBuffer)
+#define glBufferData gl_function(glBufferData)
+#define glMapBuffer gl_function(glMapBuffer)
+#define glUnmapBuffer gl_function(glUnmapBuffer)
+#define glEnableVertexAttribArray gl_function(glEnableVertexAttribArray)
+#define glVertexAttribPointer gl_function(glVertexAttribPointer)
+#define glUseProgram gl_function(glUseProgram)
+#define glDrawElements gl_function(glDrawElements)
+#define glCreateShader gl_function(glCreateShader)
+#define glShaderSource gl_function(glShaderSource)
+#define glCompileShader gl_function(glCompileShader)
+#define glGetShaderiv gl_function(glGetShaderiv)
+#define glAttachShader gl_function(glAttachShader)
+#define glLinkProgram gl_function(glLinkProgram)
+#define glDeleteShader gl_function(glDeleteShader)
+#define glGetProgramInfoLog gl_function(glGetProgramInfoLog)
+#define glCreateProgram gl_function(glCreateProgram)
+#define glGetProgramiv gl_function(glGetProgramiv)
+#define glGetShaderInfoLog gl_function(glGetShaderInfoLog)
+
 
 // Shortcuts for platform functions
 // For declarations see Platform.h
@@ -88,3 +115,5 @@ extern "C" GAME_CODE_ENTRY void __cdecl GameUpdateAndRender(PlatformState* platf
 
 // NOTE(swarzzy): All game .cpp files should be included here
 #include "Game.cpp"
+#include "RenderQueue.cpp"
+#include "Render.cpp"
