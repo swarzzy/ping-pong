@@ -12,6 +12,7 @@ uniform mat4 MVP;
 
 void main() {
     gl_Position = MVP * vec4(Position.xyz, 1.0f);
+    VertexColor = Color;
 })";
 
 const char* ColorRectOpaqueShaderFragment = R"(
@@ -38,7 +39,7 @@ void RendererInit(Renderer* renderer) {
     glBindVertexArray(globalVAO);
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LEQUAL);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
@@ -53,9 +54,9 @@ void RendererInit(Renderer* renderer) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(u16) * Renderer::MaxBufferCapacity, nullptr, GL_STATIC_DRAW);
     u16* indexData = (u16*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
 
-    static_assert((Renderer::MaxBufferCapacity % 4) == 0);
+    static_assert((Renderer::MaxBufferCapacity % 6) == 0);
 
-    for (usize i = 0; i < Renderer::MaxBufferCapacity; i+= 4) {
+    for (usize i = 0; i < Renderer::MaxBufferCapacity; i+= 6) {
         indexData[i + 0] = i;
         indexData[i + 1] = i + 1;
         indexData[i + 2] = i + 2;
@@ -69,11 +70,16 @@ void RendererInit(Renderer* renderer) {
 
     renderer->rectColorOpaqueShader = CompileGLSL("RectColorOpaque", ColorRectOpaqueShaderVertex, ColorRectOpaqueShaderFragment);
     assert(renderer->rectColorOpaqueShader);
+    renderer->mvpLocation = glGetUniformLocation(renderer->rectColorOpaqueShader, "MVP");
+    assert(renderer->mvpLocation != -1);
 }
 
 void RendererBeginFrame(Renderer* renderer) {
     glClearColor(renderer->canvas.clearColor.r, renderer->canvas.clearColor.g, renderer->canvas.clearColor.b, renderer->canvas.clearColor.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(renderer->rectColorOpaqueShader);
+    glUniformMatrix4fv(renderer->mvpLocation, 1, GL_FALSE, renderer->canvas.projection.data);
 
     const PlatformState* platform = GetPlatform();
     glViewport(0, 0, platform->windowWidth, platform->windowHeight);
@@ -115,13 +121,16 @@ void RendererDraw(Renderer* renderer, RenderQueue* queue) {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(0, sizeof(v4), GL_FLOAT, false, sizeof(Vertex), 0);
-    glVertexAttribPointer(0, sizeof(v4), GL_FLOAT, false, sizeof(Vertex), (void*)sizeof(v4));
+    glVertexAttribPointer(0, 4, GL_FLOAT, false, sizeof(Vertex), 0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, false, sizeof(Vertex), (void*)sizeof(v4));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->indexBuffer);
     glUseProgram(renderer->rectColorOpaqueShader);
 
-    glDrawElements(GL_TRIANGLES, queue->at * 4, GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLES, queue->at * 6, GL_UNSIGNED_SHORT, 0);
+}
+
+void RendererEndFrame(Renderer* renderer) {
 }
 
 GLuint CompileGLSL(const char* name, const char* vertexSource, const char* fragmentSource) {

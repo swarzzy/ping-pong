@@ -18,8 +18,6 @@ set PlatformLinkerFlags=/INCREMENTAL:NO /OPT:REF /MACHINE:X64 /NOIMPLIB %SDLDepe
 rem set GameLinkerFlags=/INCREMENTAL:NO /OPT:REF /MACHINE:X64 /DLL /OUT:%BinOutDir%\pong.dll  /PDB:%BinOutDir%\pong_%PdbMangleVal%.pdb
 set GameLinkerFlags=/INCREMENTAL:NO /OPT:REF /MACHINE:X64 /DLL /OUT:%BinOutDir%\pong.dll  /PDB:%BinOutDir%\pong.pdb
 
-
-
 set ConfigCompilerFlags=%DebugCompilerFlags%
 
 echo Building platform...

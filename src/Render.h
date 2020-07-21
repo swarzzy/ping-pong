@@ -3,20 +3,23 @@
 #include "RenderQueue.h"
 
 struct Canvas {
-    v3 min;
-    v3 max;
+    m4x4 projection;
     v4 clearColor;
 };
 
 struct Renderer {
-    // Should be less than or equal to 2^16 and multiple of 4
-    static const u32 MaxBufferCapacity = 1024;
+    // Should be less than or equal to 2^16 and multiple of 6
+    static const u32 MaxBufferCapacity = 1536;
 
     Canvas canvas;
 
     GLuint rectColorOpaqueShader;
     GLuint vertexBuffer;
     GLuint indexBuffer;
+    GLint mvpLocation;
 };
 
 void RendererInit(Renderer* renderer);
+void RendererBeginFrame(Renderer* renderer);
+void RendererDraw(Renderer* renderer, RenderQueue* queue);
+void RendererEndFrame(Renderer* renderer);

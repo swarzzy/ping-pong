@@ -1,5 +1,14 @@
 #include "SDL.h"
 
+#define GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB 0x8242
+#define GL_DEBUG_TYPE_OTHER_ARB 0x8251
+#define GL_DEBUG_SEVERITY_NOTIFICATION_ARB 0x826B
+#define GL_DEBUG_SEVERITY_LOW_ARB 0x9148
+typedef void (APIENTRY  *GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
+typedef void (APIENTRYP PFNGLDEBUGMESSAGECALLBACKPROC) (GLDEBUGPROC callback, const void *userParam);
+typedef void (APIENTRYP PFNGLDEBUGMESSAGECONTROLPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
+void OpenglDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam);
+
 OpenGLLoadResult SDLLoadOpenGL() {
     OpenGL* context = (OpenGL*)malloc(sizeof(OpenGL));
     if (!context) {
@@ -26,6 +35,17 @@ OpenGLLoadResult SDLLoadOpenGL() {
         log_print("[OpenGL] Done\n");
     } else {
         log_print("[OpenGL] Failed to load some of OpenGL functions\n");
+    }
+
+    if (SDL_GL_ExtensionSupported("GL_ARB_debug_output")) {
+        PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallbackARB = (PFNGLDEBUGMESSAGECALLBACKPROC)SDL_GL_GetProcAddress("glDebugMessageCallbackARB");
+        PFNGLDEBUGMESSAGECONTROLPROC glDebugMessageControlARB = (PFNGLDEBUGMESSAGECONTROLPROC)SDL_GL_GetProcAddress("glDebugMessageControlARB");
+        if (glDebugMessageCallbackARB && glDebugMessageControlARB) {
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+            glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION_ARB, 0, 0, GL_FALSE);
+            glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_OTHER, GL_DEBUG_SEVERITY_LOW_ARB, 0, 0, GL_FALSE);
+            glDebugMessageCallbackARB(OpenglDebugCallback, 0);
+        }
     }
 
     return {context, success};
@@ -176,6 +196,7 @@ void SDLInit(SDLContext* context, const PlatformState* platform, i32 glMajorVers
     sdl_gl_attrib_check(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glMinorVersion));
     sdl_gl_attrib_check(SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
     sdl_gl_attrib_check(SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1));
+    sdl_gl_attrib_check(SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG));
 
 #undef sdl_gl_attrib_check
 
@@ -337,4 +358,40 @@ MouseButton SDLMouseButtonConvert(u8 button) {
     }
     // Dummy return for the compiler
     return MouseButton::Left;
+}
+
+void OpenglDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) {
+    const char* sourceStr;
+    const char* typeStr;
+    const char* severityStr;
+
+    switch (source) {
+    case GL_DEBUG_SOURCE_API: { sourceStr = "API"; } break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM: { sourceStr = "window system"; } break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER: { sourceStr = "shader compiler"; } break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY: { sourceStr = "third party"; } break;
+    case GL_DEBUG_SOURCE_APPLICATION: { sourceStr = "application"; } break;
+    case GL_DEBUG_SOURCE_OTHER: { sourceStr = "other"; } break;
+    invalid_default();
+    }
+
+    switch (type) {
+    case GL_DEBUG_TYPE_ERROR: { typeStr = "error"; } break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: { typeStr = "deprecated behavior"; } break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: { typeStr = "undefined behavior"; } break;
+    case GL_DEBUG_TYPE_PORTABILITY: { typeStr = "portability problem"; } break;
+    case GL_DEBUG_TYPE_PERFORMANCE: { typeStr = "performance problem"; } break;
+    case GL_DEBUG_TYPE_OTHER: { typeStr = "other"; } break;
+    invalid_default();
+    }
+
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_HIGH: { severityStr = "high"; } break;
+    case GL_DEBUG_SEVERITY_MEDIUM: { severityStr = "medium"; } break;
+    case GL_DEBUG_SEVERITY_LOW: { severityStr = "low"; } break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION: { severityStr = "notification"; } break;
+    default: { severityStr = "unknown"; } break;
+    }
+    log_print("[OpenGL] Debug message (source: %s, type: %s, severity: %s): %s\n", sourceStr, typeStr, severityStr, message);
+    assert(false);
 }

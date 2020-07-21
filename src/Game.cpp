@@ -1,8 +1,19 @@
 #include "Game.h"
 
 void GameInit() {
-    // This code is just demonstration and does not do anything reasonable
     GameContext* context = GetContext();
+
+    Renderer* renderer = &context->renderer;
+
+    RendererInit(&context->renderer);
+    RenderQueueInit(&context->renderQueue, 1024);
+
+    renderer->canvas.clearColor = V4(1.0f, 0.4f, 0.0f, 1.0f);
+    renderer->canvas.projection = OrthoGLRH(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 1.0f);
+
+#if 0
+    // DEMO CODE!!!
+    // This code is just demonstration and does not do anything reasonable
 
     // passing zero as alignment sets it to default
     // standard platform allocator does not requiers any allocator data,
@@ -11,12 +22,14 @@ void GameInit() {
 
     context->color1 = V4(0.2f, 0.4f, 0.0f, 1.0f);
     context->color2 = V4(0.1f, 0.7f, 0.0f, 1.0f);
+#endif
 }
 
 void GameReload() {
 }
 
 void GameUpdate() {
+#if 0
     // This code is just demonstration and does not do anything reasonable
     if (KeyDown(Key::Space)) {
         GameContext* context = GetContext();
@@ -25,12 +38,28 @@ void GameUpdate() {
             context->color2.b = 0.0f;
         }
     }
+#endif
 }
 
 void GameRender() {
+    GameContext* context = GetContext();
+    Renderer* renderer = &context->renderer;
+    RenderQueue* queue = &context->renderQueue;
+
+    DrawQuad(queue, V2(0.0f), V2(3.0f), 0.8f, V4(1.0f, 1.0f, 1.0f, 1.0f));
+    //DrawQuad(queue, V2(0.0f), V2(2.0f), 0.1f, V4(1.0f, 1.0f, 0.0f, 1.0f));
+    //DrawQuad(queue, V2(0.0f), V2(1.0f), 0.0f, V4(0.0f, 0.0f, 1.0f, 1.0f));
+
+    RendererBeginFrame(renderer);
+    RendererDraw(renderer, queue);
+    RendererEndFrame(renderer);
+
+    RenderQueueReset(queue);
+
+#if 0
+    // DEMO CODE!!
     // This code is just demonstration and does not do anything reasonable
     const PlatformState* platform = GetPlatform();
-    GameContext* context = GetContext();
 
     glViewport(0, 0, platform->windowWidth, platform->windowHeight);
 
@@ -44,4 +73,5 @@ void GameRender() {
     }
 
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+#endif
 }

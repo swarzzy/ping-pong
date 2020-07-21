@@ -17,3 +17,14 @@ void RenderQueuePush(RenderQueue* queue, RenderCommand command) {
 void RenderQueueReset(RenderQueue* queue) {
     queue->at = 0;
 }
+
+void DrawQuad(RenderQueue* queue, v2 min, v2 max, f32 z, v4 color) {
+    RenderCommand command {};
+    command.type = RenderCommandType::RectColor;
+    command.rectColor.min = min;
+    command.rectColor.max = max;
+    command.rectColor.color = color;
+    command.rectColor.z = z;
+
+    RenderQueuePush(queue, command);
+}

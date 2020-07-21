@@ -3,8 +3,13 @@
 #include "Common.h"
 #include "Platform.h"
 
+#include "RenderQueue.h"
+#include "Render.h"
+
 // NOTE: All global game stuff lives here
 struct GameContext {
+    RenderQueue renderQueue;
+    Renderer renderer;
     // Dummy stuff for demonstration how everything works
     void* someData;
     v4 color1;

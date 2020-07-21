@@ -30,3 +30,6 @@ struct RenderQueue {
 void RenderQueueInit(RenderQueue* queue, u32 size);
 void RenderQueuePush(RenderQueue* queue, RenderCommand command);
 void RenderQueueReset(RenderQueue* queue);
+
+// Helpers
+void DrawQuad(RenderQueue* queue, v2 min, v2 max, f32 z, v4 color);

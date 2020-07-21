@@ -58,7 +58,9 @@ static PlatformState* _GlobalPlatformState;
 #define glCreateProgram gl_function(glCreateProgram)
 #define glGetProgramiv gl_function(glGetProgramiv)
 #define glGetShaderInfoLog gl_function(glGetShaderInfoLog)
-
+#define glDisable gl_function(glDisable)
+#define glGetUniformLocation gl_function(glGetUniformLocation)
+#define glUniformMatrix4fv gl_function(glUniformMatrix4fv)
 
 // Shortcuts for platform functions
 // For declarations see Platform.h
