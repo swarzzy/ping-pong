@@ -26,7 +26,38 @@ void main() {
     FragmentColor = vec4(VertexColor.xyz, 1.0f);
 })";
 
+const char* LineShaderVertex = R"(
+#version 330 core
+
+layout (location = 0) in vec4 Position;
+layout (location = 1) in vec4 Color;
+
+out vec4 VertexColor;
+
+uniform mat4 MVP;
+
+void main() {
+    gl_Position = MVP * vec4(Position.xyz, 1.0f);
+    VertexColor = Color;
+})";
+
+const char* LineShaderFragment = R"(
+#version 330 core
+
+out vec4 FragmentColor;
+
+in vec4 VertexColor;
+
+void main() {
+    FragmentColor = vec4(VertexColor.xyz, 1.0f);
+})";
+
 struct Vertex {
+    v4 position;
+    v4 color;
+};
+
+struct LineVertex {
     v4 position;
     v4 color;
 };
@@ -45,6 +76,8 @@ void RendererInit(Renderer* renderer) {
     glFrontFace(GL_CCW);
     // TODO(swarzzy): Multisampling
     //glEnable(GL_MULTISAMPLE);
+
+    glLineWidth(3.0f);
 
     glClearDepth(1.0f);
 
@@ -76,6 +109,11 @@ void RendererInit(Renderer* renderer) {
     assert(renderer->rectColorOpaqueShader);
     renderer->mvpLocation = glGetUniformLocation(renderer->rectColorOpaqueShader, "MVP");
     assert(renderer->mvpLocation != -1);
+
+    renderer->lineShader = CompileGLSL("LineShader", LineShaderVertex, LineShaderFragment);
+    assert(renderer->lineShader);
+    renderer->mvpLocationLine = glGetUniformLocation(renderer->lineShader, "MVP");
+    assert(renderer->mvpLocationLine != -1);
 }
 
 void RendererBeginFrame(Renderer* renderer) {
@@ -85,53 +123,104 @@ void RendererBeginFrame(Renderer* renderer) {
     glUseProgram(renderer->rectColorOpaqueShader);
     glUniformMatrix4fv(renderer->mvpLocation, 1, GL_FALSE, renderer->canvas.projection.data);
 
+    glUseProgram(renderer->lineShader);
+    glUniformMatrix4fv(renderer->mvpLocationLine, 1, GL_FALSE, renderer->canvas.projection.data);
+
     const PlatformState* platform = GetPlatform();
     glViewport(0, 0, platform->windowWidth, platform->windowHeight);
 }
 
-void RendererDraw(Renderer* renderer, RenderQueue* queue) {
-    glBindBuffer(GL_ARRAY_BUFFER, renderer->vertexBuffer);
-    // TODO(swarzzy): Is GL_STREAM_DRAW hint ok here?
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * queue->at * 4, nullptr, GL_STREAM_DRAW);
-    Vertex* buffer = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-    assert(buffer);
+void RendererFlushRectQueue(Renderer* renderer, RenderQueue* queue) {
+    if (queue->rectBufferAt) {
+        glBindBuffer(GL_ARRAY_BUFFER, renderer->vertexBuffer);
+        // TODO(swarzzy): Is GL_STREAM_DRAW hint ok here?
 
-    usize bufferAt = 0;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * queue->rectBufferAt * 4, nullptr, GL_STREAM_DRAW);
+        Vertex* buffer = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+        assert(buffer);
 
-    for (usize i = 0; i < queue->at; i++) {
-        auto command = queue->buffer + i;
+        usize bufferAt = 0;
 
-        // TODO(swarzzy): Only this command supported for now
-        assert(command->type == RenderCommandType::RectColor);
-        assert(command->transparent == false);
+        for (usize i = 0; i < queue->rectBufferAt; i++) {
+            auto command = queue->rectBuffer + i;
 
-        buffer[bufferAt + 0].position = V4(command->rectColor.min, command->rectColor.z, 1.0f);
-        buffer[bufferAt + 0].color = command->rectColor.color;
+            // TODO(swarzzy): Only this command supported for now
+            assert(command->type == RenderCommandType::RectColor);
+            assert(command->transparent == false);
 
-        buffer[bufferAt + 1].position = V4(command->rectColor.max.x, command->rectColor.min.y, command->rectColor.z, 1.0f);
-        buffer[bufferAt + 1].color = command->rectColor.color;
+            buffer[bufferAt + 0].position = V4(command->rectColor.min, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 0].color = command->rectColor.color;
 
-        buffer[bufferAt + 2].position = V4(command->rectColor.max, command->rectColor.z, 1.0f);
-        buffer[bufferAt + 2].color = command->rectColor.color;
+            buffer[bufferAt + 1].position = V4(command->rectColor.max.x, command->rectColor.min.y, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 1].color = command->rectColor.color;
 
-        buffer[bufferAt + 3].position = V4(command->rectColor.min.x, command->rectColor.max.y, command->rectColor.z, 1.0f);
-        buffer[bufferAt + 3].color = command->rectColor.color;
+            buffer[bufferAt + 2].position = V4(command->rectColor.max, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 2].color = command->rectColor.color;
 
-        bufferAt += 4;
+            buffer[bufferAt + 3].position = V4(command->rectColor.min.x, command->rectColor.max.y, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 3].color = command->rectColor.color;
+
+            bufferAt += 4;
+        }
+        glUnmapBuffer(GL_ARRAY_BUFFER);
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        glVertexAttribPointer(0, 4, GL_FLOAT, false, sizeof(Vertex), 0);
+        glVertexAttribPointer(1, 4, GL_FLOAT, false, sizeof(Vertex), (void*)sizeof(v4));
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->indexBuffer);
+        glUseProgram(renderer->rectColorOpaqueShader);
+
+        glDrawElements(GL_TRIANGLES, queue->rectBufferAt * 6, GL_UNSIGNED_SHORT, 0);
     }
+}
 
-    glUnmapBuffer(GL_ARRAY_BUFFER);
+void RendererFlushLineQueue(Renderer* renderer, RenderQueue* queue) {
+    if (queue->lineBufferAt) {
+        glBindBuffer(GL_ARRAY_BUFFER, renderer->vertexBuffer);
+        // TODO(swarzzy): Is GL_STREAM_DRAW hint ok here?
+        glBufferData(GL_ARRAY_BUFFER, sizeof(LineVertex) * queue->lineBufferAt * 2, nullptr, GL_STREAM_DRAW);
+        Vertex* buffer = (Vertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+        assert(buffer);
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+        usize bufferAt = 0;
 
-    glVertexAttribPointer(0, 4, GL_FLOAT, false, sizeof(Vertex), 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, false, sizeof(Vertex), (void*)sizeof(v4));
+        for (usize i = 0; i < queue->lineBufferAt; i++) {
+            auto command = queue->lineBuffer + i;
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->indexBuffer);
-    glUseProgram(renderer->rectColorOpaqueShader);
+            // TODO(swarzzy): Only this command supported for now
+            assert(command->type == RenderCommandType::Line);
+            assert(command->transparent == false);
 
-    glDrawElements(GL_TRIANGLES, queue->at * 6, GL_UNSIGNED_SHORT, 0);
+            buffer[bufferAt + 0].position = V4(command->line.begin, 1.0f);
+            buffer[bufferAt + 0].color = command->line.color;
+
+            buffer[bufferAt + 1].position = V4(command->line.end, 1.0f);
+            buffer[bufferAt + 1].color = command->line.color;
+
+            bufferAt += 2;
+        }
+
+        glUnmapBuffer(GL_ARRAY_BUFFER);
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        glVertexAttribPointer(0, 4, GL_FLOAT, false, sizeof(Vertex), 0);
+        glVertexAttribPointer(1, 4, GL_FLOAT, false, sizeof(Vertex), (void*)sizeof(v4));
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glUseProgram(renderer->lineShader);
+
+        glDrawArrays(GL_LINES, 0, queue->lineBufferAt * 2);
+    }
+}
+
+void RendererDraw(Renderer* renderer, RenderQueue* queue) {
+    RendererFlushRectQueue(renderer, queue);
+    RendererFlushLineQueue(renderer, queue);
 }
 
 void RendererEndFrame(Renderer* renderer) {
