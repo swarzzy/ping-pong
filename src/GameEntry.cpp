@@ -62,7 +62,8 @@ static PlatformState* _GlobalPlatformState;
 #define glGetUniformLocation gl_function(glGetUniformLocation)
 #define glUniformMatrix4fv gl_function(glUniformMatrix4fv)
 #define glClearDepth gl_function(glClearDepth)
-
+#define glDrawArrays gl_function(glDrawArrays)
+#define glLineWidth gl_function(glLineWidth)
 // Shortcuts for platform functions
 // For declarations see Platform.h
 #define platform_call(func) _GlobalPlatformState->functions. func
