@@ -46,6 +46,8 @@ void RendererInit(Renderer* renderer) {
     // TODO(swarzzy): Multisampling
     //glEnable(GL_MULTISAMPLE);
 
+    glClearDepth(1.0f);
+
     glGenBuffers(1, &renderer->vertexBuffer);
     assert(renderer->vertexBuffer);
 
@@ -56,13 +58,15 @@ void RendererInit(Renderer* renderer) {
 
     static_assert((Renderer::MaxBufferCapacity % 6) == 0);
 
+    usize k = 0;
     for (usize i = 0; i < Renderer::MaxBufferCapacity; i+= 6) {
-        indexData[i + 0] = i;
-        indexData[i + 1] = i + 1;
-        indexData[i + 2] = i + 2;
-        indexData[i + 3] = i + 2;
-        indexData[i + 4] = i + 3;
-        indexData[i + 5] = i;
+        indexData[i + 0] = k;
+        indexData[i + 1] = k + 1;
+        indexData[i + 2] = k + 2;
+        indexData[i + 3] = k + 2;
+        indexData[i + 4] = k + 3;
+        indexData[i + 5] = k;
+        k += 4;
     }
 
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);

@@ -478,7 +478,7 @@ m4x4 OrthoGLRH(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far) {
     m4x4 m = {};
     m._11 = 2.0f / (right - left);
     m._22 = 2.0f / (top - bottom);
-    m._33 = -2.0f / (far - near);
+    m._33 = 2.0f / (far - near);
     m._14 = -(right + left) / (right - left);
     m._24 = -(top + bottom) / (top - bottom);
     m._34 = -(far + near) / (far - near);

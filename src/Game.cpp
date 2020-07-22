@@ -46,9 +46,9 @@ void GameRender() {
     Renderer* renderer = &context->renderer;
     RenderQueue* queue = &context->renderQueue;
 
-    DrawQuad(queue, V2(0.0f), V2(3.0f), 0.8f, V4(1.0f, 1.0f, 1.0f, 1.0f));
-    //DrawQuad(queue, V2(0.0f), V2(2.0f), 0.1f, V4(1.0f, 1.0f, 0.0f, 1.0f));
-    //DrawQuad(queue, V2(0.0f), V2(1.0f), 0.0f, V4(0.0f, 0.0f, 1.0f, 1.0f));
+    DrawQuad(queue, V2(1.5f), V2(3.0f), 0.1f, V4(1.0f, 1.0f, 1.0f, 1.0f));
+    DrawQuad(queue, V2(0.0f), V2(2.0f), 0.2f, V4(1.0f, 1.0f, 0.0f, 1.0f));
+    DrawQuad(queue, V2(2.0f), V2(4.0f), 1.0f, V4(0.0f, 0.0f, 1.0f, 1.0f));
 
     RendererBeginFrame(renderer);
     RendererDraw(renderer, queue);

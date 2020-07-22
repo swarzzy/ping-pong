@@ -61,6 +61,7 @@ static PlatformState* _GlobalPlatformState;
 #define glDisable gl_function(glDisable)
 #define glGetUniformLocation gl_function(glGetUniformLocation)
 #define glUniformMatrix4fv gl_function(glUniformMatrix4fv)
+#define glClearDepth gl_function(glClearDepth)
 
 // Shortcuts for platform functions
 // For declarations see Platform.h
