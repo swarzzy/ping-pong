@@ -148,16 +148,16 @@ void RendererFlushRectQueue(Renderer* renderer, RenderQueue* queue) {
             assert(command->type == RenderCommandType::RectColor);
             assert(command->transparent == false);
 
-            buffer[bufferAt + 0].position = V4(command->rectColor.min, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 0].position = command->rectColor.transform * V4(command->rectColor.min, command->rectColor.z, 1.0f);
             buffer[bufferAt + 0].color = command->rectColor.color;
 
-            buffer[bufferAt + 1].position = V4(command->rectColor.max.x, command->rectColor.min.y, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 1].position = command->rectColor.transform * V4(command->rectColor.max.x, command->rectColor.min.y, command->rectColor.z, 1.0f);
             buffer[bufferAt + 1].color = command->rectColor.color;
 
-            buffer[bufferAt + 2].position = V4(command->rectColor.max, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 2].position = command->rectColor.transform * V4(command->rectColor.max, command->rectColor.z, 1.0f);
             buffer[bufferAt + 2].color = command->rectColor.color;
 
-            buffer[bufferAt + 3].position = V4(command->rectColor.min.x, command->rectColor.max.y, command->rectColor.z, 1.0f);
+            buffer[bufferAt + 3].position = command->rectColor.transform * V4(command->rectColor.min.x, command->rectColor.max.y, command->rectColor.z, 1.0f);
             buffer[bufferAt + 3].color = command->rectColor.color;
 
             bufferAt += 4;

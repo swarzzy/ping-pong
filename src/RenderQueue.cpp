@@ -39,8 +39,33 @@ void DrawQuad(RenderQueue* queue, v2 min, v2 max, f32 z, v4 color) {
     command.type = RenderCommandType::RectColor;
     command.rectColor.min = min;
     command.rectColor.max = max;
-    command.rectColor.color = color;
     command.rectColor.z = z;
+    command.rectColor.color = color;
+    command.rectColor.transform = M4x4(1.0f);
+
+    RenderQueuePush(queue, command);
+}
+
+void DrawQuad(RenderQueue* queue, v2 min, v2 max, f32 z, v4 color, const m4x4* transform) {
+    RenderCommand command {};
+    command.type = RenderCommandType::RectColor;
+    command.rectColor.min = min;
+    command.rectColor.max = max;
+    command.rectColor.z = z;
+    command.rectColor.color = color;
+    command.rectColor.transform = *transform;
+
+    RenderQueuePush(queue, command);
+}
+
+void DrawQuad(RenderQueue* queue, v4 color, const m4x4* transform, v2 anchor) {
+    RenderCommand command {};
+    command.type = RenderCommandType::RectColor;
+    command.rectColor.min = V2(-anchor.x, -anchor.y);
+    command.rectColor.max = V2(1.0f - anchor.x, 1.0f - anchor.y);
+    command.rectColor.z = 0.0f;
+    command.rectColor.color = color;
+    command.rectColor.transform = *transform;
 
     RenderQueuePush(queue, command);
 }
