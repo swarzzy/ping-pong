@@ -19,9 +19,19 @@ struct Renderer {
     GLuint indexBuffer;
     GLint mvpLocation;
     GLint mvpLocationLine;
+
+    GLuint multisampledBuffer;
+    GLuint multisampledColorTarget;
+    GLuint multisampledDepthStencilTarget;
+
+    u32 maxSupportedSampleCount;
+    u32 sampleCount;
+    uv2 resolution;
 };
 
-void RendererInit(Renderer* renderer);
+void RendererInit(Renderer* renderer, uv2 resolution, u32 sampleCount);
+void RendererChangeResolution(Renderer* renderer, uv2 newRes, u32 newSampleCount);
+
 void RendererBeginFrame(Renderer* renderer);
 void RendererDraw(Renderer* renderer, RenderQueue* queue);
 void RendererEndFrame(Renderer* renderer);

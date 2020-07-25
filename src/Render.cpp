@@ -64,10 +64,31 @@ struct LineVertex {
 
 GLuint CompileGLSL(const char* name, const char* vertexSource, const char* fragmentSource);
 
-void RendererInit(Renderer* renderer) {
+void RendererReloadTargets(Renderer* renderer, uv2 newRes, u32 newSampleCount) {
+    // TODO: There are could be a problems on some drivers
+    // with changing framebuffer attachments so this code needs to be checked
+    // on different GPUs and drivers
+    if (newSampleCount <= renderer->maxSupportedSampleCount) {
+        renderer->resolution = newRes;
+        renderer->sampleCount = newSampleCount;
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderer->multisampledColorTarget);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, newSampleCount, GL_RGBA8, renderer->resolution.x, renderer->resolution.y, GL_FALSE);
+
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, renderer->multisampledDepthStencilTarget);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, newSampleCount, GL_DEPTH_STENCIL, renderer->resolution.x, renderer->resolution.y, GL_FALSE);
+
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+    }
+}
+
+void RendererInit(Renderer* renderer, uv2 resolution, u32 sampleCount) {
     GLuint globalVAO;
     glGenVertexArrays(1, &globalVAO);
     glBindVertexArray(globalVAO);
+
+    GLint maxSamples = 1;
+    glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+    renderer->maxSupportedSampleCount = maxSamples;
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -114,12 +135,33 @@ void RendererInit(Renderer* renderer) {
     assert(renderer->lineShader);
     renderer->mvpLocationLine = glGetUniformLocation(renderer->lineShader, "MVP");
     assert(renderer->mvpLocationLine != -1);
+
+    glGenFramebuffers(1, &renderer->multisampledBuffer);
+    assert(renderer->multisampledBuffer);
+
+    glGenTextures(1, &renderer->multisampledColorTarget);
+    glGenTextures(1, &renderer->multisampledDepthStencilTarget);
+
+    renderer->resolution = resolution;
+    renderer->sampleCount = Min(sampleCount, renderer->maxSupportedSampleCount);
+    RendererReloadTargets(renderer, resolution, renderer->sampleCount);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, renderer->multisampledBuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, renderer->multisampledColorTarget, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderer->multisampledDepthStencilTarget, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, renderer->multisampledDepthStencilTarget, 0);
+    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void RendererChangeResolution(Renderer* renderer, uv2 newRes, u32 newSampleCount) {
+    // TODO(swarzzy): Check for max supported resolution
+    renderer->resolution = newRes;
+    renderer->sampleCount = Min(newSampleCount, renderer->maxSupportedSampleCount);
+    RendererReloadTargets(renderer, renderer->resolution, renderer->sampleCount);
 }
 
 void RendererBeginFrame(Renderer* renderer) {
-    glClearColor(renderer->canvas.clearColor.r, renderer->canvas.clearColor.g, renderer->canvas.clearColor.b, renderer->canvas.clearColor.a);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     glUseProgram(renderer->rectColorOpaqueShader);
     glUniformMatrix4fv(renderer->mvpLocation, 1, GL_FALSE, renderer->canvas.projection.data);
 
@@ -128,6 +170,12 @@ void RendererBeginFrame(Renderer* renderer) {
 
     const PlatformState* platform = GetPlatform();
     glViewport(0, 0, platform->windowWidth, platform->windowHeight);
+
+    // Render to multisampled framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, renderer->multisampledBuffer);
+
+    glClearColor(renderer->canvas.clearColor.r, renderer->canvas.clearColor.g, renderer->canvas.clearColor.b, renderer->canvas.clearColor.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void RendererFlushRectQueue(Renderer* renderer, RenderQueue* queue) {
@@ -224,6 +272,15 @@ void RendererDraw(Renderer* renderer, RenderQueue* queue) {
 }
 
 void RendererEndFrame(Renderer* renderer) {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, renderer->multisampledBuffer);
+
+    // Resolve multisampled framebuffer and blit it to offsceen buffer
+    glBlitFramebuffer(0, 0, renderer->resolution.x, renderer->resolution.y,
+                      0, 0, renderer->resolution.x, renderer->resolution.y,
+                      GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
 GLuint CompileGLSL(const char* name, const char* vertexSource, const char* fragmentSource) {

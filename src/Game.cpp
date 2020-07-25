@@ -2,43 +2,28 @@
 
 void GameInit() {
     GameContext* context = GetContext();
+    const PlatformState* platform = GetPlatform();
 
     Renderer* renderer = &context->renderer;
 
-    RendererInit(&context->renderer);
+    RendererInit(&context->renderer, UV2(platform->windowWidth, platform->windowHeight), 4);
+
     RenderQueueInit(&context->renderQueue, 1024);
 
     renderer->canvas.clearColor = V4(1.0f, 0.4f, 0.0f, 1.0f);
     renderer->canvas.projection = OrthoGLRH(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 1.0f);
-
-#if 0
-    // DEMO CODE!!!
-    // This code is just demonstration and does not do anything reasonable
-
-    // passing zero as alignment sets it to default
-    // standard platform allocator does not requiers any allocator data,
-    // so passing nullptr
-    context->someData = PlatformAllocate(1024, 0, nullptr);
-
-    context->color1 = V4(0.2f, 0.4f, 0.0f, 1.0f);
-    context->color2 = V4(0.1f, 0.7f, 0.0f, 1.0f);
-#endif
 }
 
 void GameReload() {
 }
 
 void GameUpdate() {
-#if 0
-    // This code is just demonstration and does not do anything reasonable
-    if (KeyDown(Key::Space)) {
-        GameContext* context = GetContext();
-        context->color2.b += 0.01f;
-        if (context->color2.b > 1.0f) {
-            context->color2.b = 0.0f;
-        }
+    const PlatformState* platform = GetPlatform();
+    GameContext* context = GetContext();
+
+    if (platform->windowWidth != context->renderer.resolution.x || platform->windowHeight != context->renderer.resolution.y) {
+        RendererChangeResolution(&context->renderer, UV2(platform->windowWidth, platform->windowHeight), context->renderer.sampleCount);
     }
-#endif
 }
 
 void GameRender() {
@@ -50,28 +35,20 @@ void GameRender() {
     DrawQuad(queue, V2(0.0f), V2(2.0f), 0.2f, V4(1.0f, 1.0f, 0.0f, 1.0f));
     DrawQuad(queue, V2(2.0f), V2(4.0f), 1.0f, V4(0.0f, 0.0f, 1.0f, 1.0f));
 
+    //m4x4 transform = Translate(V3(-3.0f, -5.0f, 0.0f)) * Scale(V3(2.3f));// * M4x4(3.0f);//Rotate(0.0f, 45.0f, 0.0f);
+    static f32 time = 0.0f;
+    time += GetPlatform()->deltaTime * 20.0f;
+    m4x4 transform = Translate(V3(0.0f, 0.0f, 1.0f)) * Rotate(0.0f, 0.0f, time);
+
+    DrawQuad(queue, V4(1.0f, 0.0f, 0.0f, 1.0f), &transform, V2(0.7f));
+
+    //void DrawQuad(RenderQueue* queue, v3 min, v3 max, v4 color, const m4x4* transform);
+    //void DrawQuad(RenderQueue* queue, v4 color, const m4x4* transform, v2 anchor = {});
+
+
     RendererBeginFrame(renderer);
     RendererDraw(renderer, queue);
     RendererEndFrame(renderer);
 
     RenderQueueReset(queue);
-
-#if 0
-    // DEMO CODE!!
-    // This code is just demonstration and does not do anything reasonable
-    const PlatformState* platform = GetPlatform();
-
-    glViewport(0, 0, platform->windowWidth, platform->windowHeight);
-
-    v4 c1 = context->color1;
-    v4 c2 = context->color2;
-
-    if (MouseButtonDown(MouseButton::Left)) {
-        glClearColor(c1.r, c1.g, c1.b, c1.a);
-    } else {
-        glClearColor(c2.r, c2.g, c2.b, c2.a);
-    }
-
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-#endif
 }

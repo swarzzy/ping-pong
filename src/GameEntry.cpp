@@ -64,6 +64,17 @@ static PlatformState* _GlobalPlatformState;
 #define glClearDepth gl_function(glClearDepth)
 #define glDrawArrays gl_function(glDrawArrays)
 #define glLineWidth gl_function(glLineWidth)
+#define glBindTexture gl_function(glBindTexture)
+#define glTexImage2DMultisample gl_function(glTexImage2DMultisample)
+#define glTexParameteri gl_function(glTexParameteri)
+#define glGenFramebuffers gl_function(glGenFramebuffers)
+#define glGenTextures gl_function(glGenTextures)
+#define glBindFramebuffer gl_function(glBindFramebuffer)
+#define glFramebufferTexture2D gl_function(glFramebufferTexture2D)
+#define glCheckFramebufferStatus gl_function(glCheckFramebufferStatus)
+#define glBlitFramebuffer gl_function(glBlitFramebuffer)
+#define glGetIntegerv gl_function(glGetIntegerv)
+
 // Shortcuts for platform functions
 // For declarations see Platform.h
 #define platform_call(func) _GlobalPlatformState->functions. func

@@ -393,5 +393,5 @@ void OpenglDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
     default: { severityStr = "unknown"; } break;
     }
     log_print("[OpenGL] Debug message (source: %s, type: %s, severity: %s): %s\n", sourceStr, typeStr, severityStr, message);
-    assert(false);
+    //assert(false);
 }
