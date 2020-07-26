@@ -14,10 +14,12 @@ struct Renderer {
     Canvas canvas;
 
     GLuint rectColorOpaqueShader;
+    GLuint rectColorTransparentShader;
     GLuint lineShader;
     GLuint vertexBuffer;
     GLuint indexBuffer;
     GLint mvpLocation;
+    GLint mvpLocationRectColorTransparent;
     GLint mvpLocationLine;
 
     GLuint multisampledBuffer;

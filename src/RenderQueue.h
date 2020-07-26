@@ -33,18 +33,24 @@ struct RenderCommand {
 };
 
 struct RenderQueue {
-    u32 rectBufferSize;
-    u32 rectBufferAt;
-    u32 lineBufferSize;
-    u32 lineBufferAt;
-    RenderCommand* rectBuffer;
-    // TODO(swarzzy): Should we use separate buffers for different command or just
-    // use one and sort it?
-    RenderCommand* lineBuffer;
+    static const u32 QueueCount = 3;
+
+    static const u32 OpaqueQueue = 0;
+    static const u32 TransparentQueue = 1;
+    static const u32 LineQueue = 2;
+
+    struct Buffer {
+        u32 size;
+        u32 at;
+        RenderCommand* commands;
+    };
+
+    Buffer buffers[QueueCount];
 };
 
 void RenderQueueInit(RenderQueue* queue, u32 size);
 void RenderQueuePush(RenderQueue* queue, RenderCommand command);
+void RenderQueuePrepare(RenderQueue* queue);
 void RenderQueueReset(RenderQueue* queue);
 
 // Helpers

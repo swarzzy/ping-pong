@@ -31,9 +31,14 @@ void GameRender() {
     Renderer* renderer = &context->renderer;
     RenderQueue* queue = &context->renderQueue;
 
+    renderer->canvas.clearColor = V4(0.0f, 0.0f, 0.0f, 1.0f);
+
     DrawQuad(queue, V2(1.5f), V2(3.0f), 0.1f, V4(1.0f, 1.0f, 1.0f, 1.0f));
     DrawQuad(queue, V2(0.0f), V2(2.0f), 0.2f, V4(1.0f, 1.0f, 0.0f, 1.0f));
     DrawQuad(queue, V2(2.0f), V2(4.0f), 1.0f, V4(0.0f, 0.0f, 1.0f, 1.0f));
+    DrawQuad(queue, V2(-5.0f), V2(5.0f), 0.8f, V4(0.2f, 0.0f, 1.0f, 0.5f));
+    DrawQuad(queue, V2(-6.0f), V2(3.0f), 0.7f, V4(1.0f, 0.0f, 0.2f, 0.5f));
+    DrawQuad(queue, V2(-3.0f), V2(4.0f), 0.9f, V4(0.0f, 1.0f, 0.0f, 0.3f));
 
     //m4x4 transform = Translate(V3(-3.0f, -5.0f, 0.0f)) * Scale(V3(2.3f));// * M4x4(3.0f);//Rotate(0.0f, 45.0f, 0.0f);
     static f32 time = 0.0f;
@@ -46,6 +51,7 @@ void GameRender() {
     //void DrawQuad(RenderQueue* queue, v4 color, const m4x4* transform, v2 anchor = {});
 
 
+    RenderQueuePrepare(queue);
     RendererBeginFrame(renderer);
     RendererDraw(renderer, queue);
     RendererEndFrame(renderer);

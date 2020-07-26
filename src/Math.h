@@ -62,6 +62,14 @@ union Vector<T, 4> {
         Vector<T, 3> xyz;
         T _unused2;
     };
+    struct {
+        Vector<T, 2> rg;
+        T _unused3[2];
+    };
+    struct {
+        Vector<T, 3> rgb;
+        T _unused4;
+    };
     T data[Size];
 };
 

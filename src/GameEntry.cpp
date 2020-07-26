@@ -74,6 +74,9 @@ static PlatformState* _GlobalPlatformState;
 #define glCheckFramebufferStatus gl_function(glCheckFramebufferStatus)
 #define glBlitFramebuffer gl_function(glBlitFramebuffer)
 #define glGetIntegerv gl_function(glGetIntegerv)
+#define glDrawRangeElements gl_function(glDrawRangeElements)
+#define glBlendFunc gl_function(glBlendFunc)
+#define glBlendEquation gl_function(glBlendEquation)
 
 // Shortcuts for platform functions
 // For declarations see Platform.h
