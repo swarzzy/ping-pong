@@ -59,7 +59,7 @@ namespace Containers
 
         T Top() const
         {
-            return data.At(0);
+            return data[0];
         }
 
         void RemoveTop()

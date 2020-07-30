@@ -11,34 +11,69 @@ namespace Containers
     {
     private:
         T* data;
-        i32 size;
-        i32 allocatedSize;
+        i32 size = 0;
+        i32 allocatedSize = 0;
 
         void reallocateData()
         {
             allocatedSize *= 2;
-            data = (i32*) PlatformReallocate(data, allocatedSize, nullptr);
+            data = (T*) PlatformReallocate(data, allocatedSize * sizeof(T), nullptr);
         }
 
     public:
         typedef T* Iterator;
+        typedef const T* ConstIterator;
 
         Array(const Array<T>& other) : size(other.size), allocatedSize(other.allocatedSize)
         {
-            data = (i32*) PlatformAllocate(sizeof(T) * allocatedSize, 0, nullptr);
-            memcpy(data, other.data, sizeof(T) * allocatedSize);
+            if (allocatedSize)
+            {
+                data = (T*) PlatformAllocate(sizeof(T) * allocatedSize, 0, nullptr);
+                memcpy(data, other.data, sizeof(T) * allocatedSize);
+            }
         }
 
         Array()
         {
-            allocatedSize = EMPTY_ALLOCATION_SIZE;
-            data = (i32*) PlatformAllocate(sizeof(T) * allocatedSize, 0, nullptr);
+            data = (T*) PlatformAllocate(sizeof(T) * EMPTY_ALLOCATION_SIZE, 0, nullptr);
+            if (data)
+            {
+                allocatedSize = EMPTY_ALLOCATION_SIZE;
+            }
+
             size = 0;
         }
 
         ~Array()
         {
-            PlatformDeallocate(data, nullptr);
+            for (T* iterator = this->begin(); iterator != this->end(); ++iterator)
+            {
+                iterator->~T();
+            }
+
+            if (allocatedSize)
+            {
+                PlatformDeallocate(data, nullptr);
+            }
+        }
+
+        Array<T>& operator=(const Array<T>& other)
+        {
+            if (allocatedSize)
+            {
+                data = (T*) PlatformReallocate(data, other.allocatedSize * sizeof(T), nullptr);
+            }
+            else
+            {
+                data = (T*) PlatformAllocate(sizeof(T) * other.allocatedSize, 0, nullptr);
+            }
+
+            size = other.size;
+            allocatedSize = other.allocatedSize;
+
+            memcpy(data, other.data, sizeof(T) * allocatedSize);
+
+            return *this;
         }
 
         void Insert(const T& elem)
@@ -48,7 +83,8 @@ namespace Containers
                 reallocateData();
             }
 
-            data[size++] = elem;
+            new(data + size) T(elem);
+            ++size;
         }
 
         void Expand(i32 count)
@@ -80,9 +116,19 @@ namespace Containers
             return data[index];
         }
 
-        T At(i32 index) const
+        const T& operator[](i32 index) const
         {
             return data[index];
+        }
+
+        T& Back()
+        {
+            return data[size - 1];
+        }
+
+        const T& Back() const
+        {
+            return data[size - 1];
         }
 
         Iterator begin()
@@ -91,6 +137,16 @@ namespace Containers
         }
 
         Iterator end()
+        {
+            return data + size;
+        }
+
+        ConstIterator begin() const
+        {
+            return data;
+        }
+
+        ConstIterator end() const
         {
             return data + size;
         }
