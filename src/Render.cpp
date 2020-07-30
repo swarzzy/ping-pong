@@ -339,6 +339,78 @@ void RendererEndFrame(Renderer* renderer) {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
+GLenum ToOpenGL(TextureWrapMode mode) {
+    GLenum result;
+    switch (mode) {
+    case TextureWrapMode::Repeat: { result = GL_REPEAT; } break;
+    case TextureWrapMode::ClampToEdge: { result = GL_CLAMP_TO_EDGE; } break;
+        invalid_default();
+    }
+    return result;
+}
+
+struct GLTextureFormat {
+    GLenum internal;
+    GLenum format;
+    GLenum type;
+};
+
+GLTextureFormat ToOpenGL(TextureFormat format) {
+    GLTextureFormat result;
+    switch (format) {
+    case TextureFormat::SRGBA8: { result.internal = GL_SRGB8_ALPHA8; result.format = GL_RGBA; result.type = GL_UNSIGNED_BYTE; } break;
+    case TextureFormat::SRGB8: { result.internal = GL_SRGB8; result.format = GL_RGB; result.type = GL_UNSIGNED_BYTE; } break;
+    case TextureFormat::RGBA8: { result.internal = GL_RGBA8; result.format = GL_RGBA; result.type = GL_UNSIGNED_BYTE; } break;
+    case TextureFormat::RGB8: { result.internal = GL_RGB8; result.format = GL_RGB; result.type = GL_UNSIGNED_BYTE; } break;
+    case TextureFormat::RGB16F: { result.internal = GL_RGB16F; result.format = GL_RGB; result.type = GL_FLOAT; } break;
+    case TextureFormat::RG16F: { result.internal = GL_RG16F; result.format = GL_RG; result.type = GL_FLOAT; } break;
+    case TextureFormat::RG32F: { result.internal = GL_RG32F; result.format = GL_RG; result.type = GL_FLOAT; } break;
+    case TextureFormat::R8: { result.internal = GL_R8; result.format = GL_RED; result.type = GL_UNSIGNED_BYTE; } break;
+    case TextureFormat::RG8: { result.internal = GL_RG8; result.format = GL_RG; result.type = GL_UNSIGNED_BYTE; } break;
+        invalid_default();
+    }
+    return result;
+}
+
+struct GLTextureFilter {
+    GLenum min;
+    GLenum mag;
+};
+
+GLTextureFilter ToOpenGL(TextureFilter filter) {
+    GLTextureFilter result = {};
+    switch (filter) {
+    case TextureFilter::None: { result.min = GL_NEAREST; result.mag = GL_NEAREST; } break;
+    case TextureFilter::Bilinear: { result.min = GL_LINEAR; result.mag = GL_LINEAR; } break;
+    case TextureFilter::Trilinear: { result.min = GL_LINEAR_MIPMAP_LINEAR; result.mag = GL_LINEAR; } break;
+    }
+    return result;
+}
+
+
+u32 RendererLoadTexture(Renderer* renderer, u32 width, u32 height, TextureFormat format, void* pixels, TextureFilter filter, TextureWrapMode wrapMode) {
+    GLuint texture;
+    glGenTextures(1, &texture);
+    assert(texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    auto glFormat = ToOpenGL(format);
+    auto glFilter = ToOpenGL(filter);
+    auto glWrapMode = ToOpenGL(wrapMode);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, glFormat.internal, width,
+                 height, 0, glFormat.format, glFormat.type, pixels);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter.mag);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter.min);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return (u32)texture;
+}
+
 GLuint CompileGLSL(const char* name, const char* vertexSource, const char* fragmentSource) {
     GLuint resultHandle = 0;
 

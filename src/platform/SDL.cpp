@@ -1,5 +1,27 @@
 #include "SDL.h"
 
+// Disable stupid warnings clang from stb_image
+#if defined (COMPILER_CLANG)
+#pragma clang diagnostic ignored "-Wparentheses-equality"
+#endif
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ASSERT(x) assert((x), "stb_image assert was triggered")
+#include "../../ext/stb_image.h"
+
+Image STBI_LoadImage(const char* filename, u32 forceNumComponents) {
+    Image result {};
+    int w, h, n;
+    // Always force 4 channels per pixel output
+    result.data = stbi_load(filename, &w, &h, &n, forceNumComponents);
+    if (result.data) {
+        result.width = w;
+        result.height = h;
+        result.numComponents = forceNumComponents == 0 ? n : forceNumComponents;
+    }
+    return result;
+}
+
 #define GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB 0x8242
 #define GL_DEBUG_TYPE_OTHER_ARB 0x8251
 #define GL_DEBUG_SEVERITY_NOTIFICATION_ARB 0x826B

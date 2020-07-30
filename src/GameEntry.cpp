@@ -3,6 +3,11 @@
 #include "Math.h"
 #include "platform/OpenGL.h"
 
+// undef stuff from windows.h
+#if defined (LoadImage)
+#undef LoadImage
+#endif
+
 // NOTE: Logger and assert handler implementation
 // TODO: Logger
 void Logger(void* data, const char* fmt, va_list* args) {
@@ -77,6 +82,7 @@ static PlatformState* _GlobalPlatformState;
 #define glDrawRangeElements gl_function(glDrawRangeElements)
 #define glBlendFunc gl_function(glBlendFunc)
 #define glBlendEquation gl_function(glBlendEquation)
+#define glTexImage2D gl_function(glTexImage2D)
 
 // Shortcuts for platform functions
 // For declarations see Platform.h
@@ -90,6 +96,7 @@ static PlatformState* _GlobalPlatformState;
 #define PlatformDebugCloseFile platform_call(DebugCloseFile)
 #define PlatformDebugCopyFile platform_call(DebugCopyFile)
 #define PlatformDebugWriteToOpenedFile platform_call(DebugWriteToOpenedFile)
+#define PlatformLoadImage platform_call(LoadImage)
 
 // Allocator declaraions are in Common.h
 #define PlatformAllocate platform_call(Allocate)

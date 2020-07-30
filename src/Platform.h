@@ -50,6 +50,17 @@ typedef FileHandle(DebugOpenFileFn)(const char* filename);
 typedef b32(DebugCloseFileFn)(FileHandle handle);
 typedef u32(DebugWriteToOpenedFileFn)(FileHandle handle, void* data, u32 size);
 
+// Image loading
+struct Image {
+    u32 width;
+    u32 height;
+    // Number of channels per pixel
+    u32 numComponents;
+    void* data;
+};
+
+typedef Image(LoadImageFn)(const char* filename, u32 forceNumComponents);
+
 // NOTE: Functions that platform passes to the game
 struct PlatformCalls
 {
@@ -61,6 +72,8 @@ struct PlatformCalls
     DebugCloseFileFn* DebugCloseFile;
     DebugCopyFileFn* DebugCopyFile;
     DebugWriteToOpenedFileFn* DebugWriteToOpenedFile;
+
+    LoadImageFn* LoadImage;
 
     // Default allocator
     AllocateFn* Allocate;

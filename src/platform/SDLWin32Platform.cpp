@@ -8,6 +8,8 @@
 #define _UNICODE
 #endif
 
+#undef LoadImage
+
 // Forcing the app to use discrete graphics adpter by default
 #if defined (DISCRETE_GRAPHICS_DEFAULT)
 extern "C" { __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
@@ -226,6 +228,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, in
     context->state.functions.DebugCloseFile = DebugCloseFile;
     context->state.functions.DebugCopyFile = DebugCopyFile;
     context->state.functions.DebugWriteToOpenedFile = DebugWriteToOpenedFile;
+
+    context->state.functions.LoadImage = STBI_LoadImage;
 
     context->state.functions.Allocate = Allocate;
     context->state.functions.Deallocate = Deallocate;

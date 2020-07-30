@@ -197,6 +197,8 @@ int main() {
     context->state.functions.DebugCopyFile = DebugCopyFile;
     context->state.functions.DebugWriteToOpenedFile = DebugWriteToOpenedFile;
 
+    context->state.functions.LoadImage = STBI_LoadImage;
+
     context->state.functions.Allocate = Allocate;
     context->state.functions.Deallocate = Deallocate;
     context->state.functions.Reallocate = Reallocate;

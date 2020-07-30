@@ -28,6 +28,8 @@ struct OpenGLLoadResult {
     b32 success;
 };
 
+Image STBI_LoadImage(const char* filename, u32 forceNumComponents);
+
 Key SDLKeycodeConvert(i32 sdlKeycode);
 MouseButton SDLMouseButtonConvert(u8 button);
 
