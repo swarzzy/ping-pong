@@ -87,23 +87,19 @@ namespace Containers
             ++size;
         }
 
-        void Expand(i32 count)
-        {
-            if (size + count < allocatedSize)
-            {
-                reallocateData();
-            }
-
-            size += count;
-        }
-
         void Remove(i32 count)
         {
-            size -= count;
-            if (size < 0)
+            if (count > size)
             {
-                size = 0;
+                count = size;
             }
+
+            for (int i = size - 1; i >= size - count; --i)
+            {
+                (data + i)->~T();
+            }
+
+            size -= count;
         }
 
         i32 Size() const

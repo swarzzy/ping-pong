@@ -1,7 +1,5 @@
 #pragma once
 
-#include <functional>
-
 #include "Array.h"
 
 namespace Containers
@@ -43,21 +41,35 @@ namespace Containers
 
         void Insert(T elem)
         {
-            data.Expand(1);
-
-            i32 currentIndex = data.Size() - 1;
+            i32 currentIndex = data.Size();
             i32 parrentIndex = getParentIndex(currentIndex);
 
             while (currentIndex > 0 && lessThan(data[parrentIndex], elem))
             {
-                data[currentIndex] = data[parrentIndex];
+                if (currentIndex == data.Size())
+                {
+                    data.Insert(data[parrentIndex]);
+                }
+                else
+                {
+                    data[currentIndex] = data[parrentIndex];
+                }
+
                 currentIndex = parrentIndex;
                 parrentIndex = getParentIndex(currentIndex);
             }
-            data[currentIndex] = elem;
+
+            if (currentIndex == data.Size())
+            {
+                data.Insert(elem);
+            }
+            else
+            {
+                data[currentIndex] = elem;
+            }
         }
 
-        T Top() const
+        const T& Top() const
         {
             return data[0];
         }
