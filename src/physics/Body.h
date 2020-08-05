@@ -1,8 +1,11 @@
 #pragma once
 
-#include <vector>
-
+#include "../containers/Array.h"
 #include "../Math.h"
+#include "../Render.h"
+
+
+#include <iostream>
 
 namespace Physics
 {
@@ -20,9 +23,9 @@ namespace Physics
 
     private:
         friend class ConvexBody;
-        std::vector<v3>::const_iterator pointIterator;
+        Containers::Array<v3>::ConstIterator pointIterator;
 
-        BodyFeature(std::vector<v3>::const_iterator it, bool isP)
+        BodyFeature(Containers::Array<v3>::ConstIterator it, bool isP)
         {
              isPoint = isP;
              pointIterator = it;
@@ -33,6 +36,9 @@ namespace Physics
     {
     protected:
         m3x3 transform;
+        f32 lastTimeUpdated = 0.0f;
+        v3 centerOfMass;
+        v2 velocity = {0.0, 0.0}; // units / seconds
 
     public:
         virtual BodyFeature GetRandomFeature() const = 0;
@@ -43,11 +49,35 @@ namespace Physics
         virtual v3 GetFirstPointPosition(const BodyFeature& feature) const = 0;
         virtual v3 GetSecondPointPosition(const BodyFeature& feature) const = 0;
         virtual v3 GetPointNearestToOther(const BodyFeature& feature, const v3& otherPoint) const = 0;
+        virtual void Draw(RenderQueue* queue) const = 0;
         virtual inline BodyType Type() const = 0;
 
         v3 GetPointPosition(const v3& point) const
         {
             return transform * point;
+        }
+
+        void AdvanceToTime(f32 time)
+        {
+            f32 timeDelta = time - lastTimeUpdated;
+            lastTimeUpdated = time;
+
+            transform = Translate(velocity * timeDelta) * transform;
+        }
+
+        v2 GetVelocity() const
+        {
+            return velocity;
+        }
+
+        void SetVelocity(v2 newVelocity)
+        {
+            velocity = newVelocity;
+        }
+
+        v3 GetCenterOfMass() const
+        {
+            return transform * centerOfMass;
         }
     };
 
@@ -55,23 +85,45 @@ namespace Physics
     class ConvexBody : public Body
     {
     private:
-        std::vector<v3> Vertices;
+        Containers::Array<v3> Vertices;
 
-        inline std::vector<v3>::const_iterator getPreviousIterator(std::vector<v3>::const_iterator currentIterator) const
+        inline Containers::Array<v3>::ConstIterator getPreviousIterator(Containers::Array<v3>::ConstIterator currentIterator) const
         {
             return currentIterator == Vertices.begin() ? (Vertices.end() - 1) : (currentIterator - 1);
         };
 
-        inline std::vector<v3>::const_iterator getNextIterator(std::vector<v3>::const_iterator currentIterator) const
+        inline Containers::Array<v3>::ConstIterator getNextIterator(Containers::Array<v3>::ConstIterator currentIterator) const
         {
             return currentIterator + 1 == Vertices.end() ? Vertices.begin() : (currentIterator + 1);
         };
 
     public:
         // points should be passed clockwise
-        ConvexBody(std::vector<v3> vertices, m3x3 transf) : Vertices(vertices)
+        explicit ConvexBody(Containers::Array<v3> vertices) : Vertices(vertices)
+        {
+            transform = M3x3(1.0);
+
+            centerOfMass = {0.0, 0.0, 0.0};
+
+            for (const v3& vert : Vertices)
+            {
+                centerOfMass += vert;
+            }
+            centerOfMass /= (f32)Vertices.Size();
+        }
+
+        ConvexBody(Containers::Array<v3> vertices, m3x3 transf) : Vertices(vertices)
         {
             transform = transf;
+        }
+
+        void Draw(RenderQueue* queue) const
+        {
+            for (int i = 1; i < Vertices.Size(); ++i)
+            {
+                DrawLine(queue, transform * Vertices[i - 1], transform * Vertices[i], {0.0, 0.0, 0.0, 1.0});
+            }
+            DrawLine(queue, transform * Vertices[0], transform * Vertices.Back(), {0.0, 0.0, 0.0, 1.0});
         }
 
         v3 GetFirstPointPosition(const BodyFeature& feature) const
@@ -92,18 +144,18 @@ namespace Physics
         // test feature Voronoi region against other point
         bool TryUpdateToPreviousFeature(BodyFeature& feature, const v3& otherPoint) const
         {
-            std::vector<v3>::const_iterator& currentIterator = feature.pointIterator;
+            Containers::Array<v3>::ConstIterator& currentIterator = feature.pointIterator;
             v3 currentPoint = GetPointPosition(*currentIterator);
             v3 vectorToOtherPoint = otherPoint - currentPoint;
 
             if (feature.isPoint)
             {
-                std::vector<v3>::const_iterator previousIterator = getPreviousIterator(currentIterator);
+                Containers::Array<v3>::ConstIterator previousIterator = getPreviousIterator(currentIterator);
                 const v3 previousPoint = GetPointPosition(*previousIterator);
                 const v3 vectorToPreviousPoint = previousPoint - currentPoint;
                 const v3 voronoiEdgeVector = {vectorToPreviousPoint.y, -vectorToPreviousPoint.x, 0.0}; // rotate 90 degree clockwise
                 
-                if (vectorToOtherPoint.x * voronoiEdgeVector.y - vectorToOtherPoint.y * voronoiEdgeVector.x > 0.0)
+                if (vectorToOtherPoint.x * voronoiEdgeVector.y - vectorToOtherPoint.y * voronoiEdgeVector.x > -F32::Eps)
                 {
                     return false;
                 }
@@ -120,8 +172,8 @@ namespace Physics
                 const v3 vectorToNextPoint = nextPoint - currentPoint;
                 const v3 voronoiEdgeVector = {-vectorToNextPoint.y, vectorToNextPoint.x, 0.0}; // rotate 90 degrees counter clockwise
 
-                if (vectorToOtherPoint.x * voronoiEdgeVector.y - vectorToOtherPoint.y * voronoiEdgeVector.x > 0.0 &&
-                    vectorToNextPoint.x * vectorToOtherPoint.y - vectorToNextPoint.y * vectorToOtherPoint.x > 0.0) // count feature only as a 
+                if (vectorToOtherPoint.x * voronoiEdgeVector.y - vectorToOtherPoint.y * voronoiEdgeVector.x > -F32::Eps &&
+                    vectorToNextPoint.x * vectorToOtherPoint.y - vectorToNextPoint.y * vectorToOtherPoint.x > -F32::Eps) // count feature only as a 
                 {                                                                                                  // previous edge of voronoi
                     return false;                                                                                  // region
                 }
@@ -137,10 +189,10 @@ namespace Physics
         // That's why we should check next feature before previous.
         bool TryUpdateToNextFeature(BodyFeature& feature, const v3& otherPoint) const
         {
-            std::vector<v3>::const_iterator& currentIterator = feature.pointIterator;
+            Containers::Array<v3>::ConstIterator& currentIterator = feature.pointIterator;
             const v3 currentPoint = GetPointPosition(*currentIterator);
 
-            std::vector<v3>::const_iterator nextIterator = getNextIterator(currentIterator);
+            Containers::Array<v3>::ConstIterator nextIterator = getNextIterator(currentIterator);
             const v3 nextPoint = GetPointPosition(*nextIterator);
 
             if (feature.isPoint)
@@ -149,7 +201,7 @@ namespace Physics
                 const v3 vectorToNextPoint = nextPoint - currentPoint;
                 const v3 voronoiEdgeVector = {-vectorToNextPoint.y, vectorToNextPoint.x, 0.0};
 
-                if (voronoiEdgeVector.x * vectorToOtherPoint.y - voronoiEdgeVector.y * vectorToOtherPoint.x > 0.0)
+                if (voronoiEdgeVector.x * vectorToOtherPoint.y - voronoiEdgeVector.y * vectorToOtherPoint.x > -F32::Eps)
                 {
                     return false;
                 }
@@ -165,7 +217,7 @@ namespace Physics
                 const v3 vectorFromNextPoint = currentPoint - nextPoint;
                 const v3 voronoiEdgeVector = {vectorFromNextPoint.y, -vectorFromNextPoint.x, 0.0};
 
-                if (voronoiEdgeVector.x * vectorToOtherPoint.y - voronoiEdgeVector.y * vectorToOtherPoint.x > 0.0)
+                if (voronoiEdgeVector.x * vectorToOtherPoint.y - voronoiEdgeVector.y * vectorToOtherPoint.x > -F32::Eps)
                 {
                     return false;
                 }

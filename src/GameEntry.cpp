@@ -100,6 +100,7 @@ extern "C" GAME_CODE_ENTRY void __cdecl GameUpdateAndRender(PlatformState* platf
         *data = context;
         _GlobalGameContext = context;
         _GlobalPlatformState = platform;
+        context = new(context) GameContext();
         GameInit();
     } break;
     case GameInvoke::Reload: {

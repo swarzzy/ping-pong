@@ -1,4 +1,6 @@
 #include "Game.h"
+#include "physics/Solver.h"
+#include <iostream>
 
 void GameInit() {
     GameContext* context = GetContext();
@@ -9,7 +11,29 @@ void GameInit() {
     RenderQueueInit(&context->renderQueue, 1024);
 
     renderer->canvas.clearColor = V4(1.0f, 0.4f, 0.0f, 1.0f);
-    renderer->canvas.projection = OrthoGLRH(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 1.0f);
+    renderer->canvas.projection = OrthoGLRH(-100.0f, 100.0f, -100.0f, 100.0f, 0.0f, 1.0f);
+
+    Containers::Array<v3> arr1;
+    arr1.Insert({-50.0, -50.0, 1.0});
+    arr1.Insert({-50.0, -2.0, 1.0});
+    arr1.Insert({-40.0, -5.0, 1.0});
+    arr1.Insert({-3.0, -45.0, 1.0});
+    arr1.Insert({-2.0, -50.0, 1.0});
+
+    Containers::Array<v3> arr2;
+    arr2.Insert({50.0, 50.0, 1.0});
+    arr2.Insert({50.0, 2.0, 1.0});
+    arr2.Insert({2.0, 50.0, 1.0});
+
+    Physics::ConvexBody b1(arr1);
+    Physics::ConvexBody b2(arr2);
+
+    b1.SetVelocity({3.5, 0.5});
+    b2.SetVelocity({-2.0, -0.1});
+
+    context->physicSolver.AddBody(b1);
+    context->physicSolver.AddBody(b2);
+
 
 #if 0
     // DEMO CODE!!!
@@ -29,6 +53,7 @@ void GameReload() {
 }
 
 void GameUpdate() {
+    GetContext()->physicSolver.Advance(GetPlatform()->deltaTime);
 #if 0
     // This code is just demonstration and does not do anything reasonable
     if (KeyDown(Key::Space)) {
@@ -46,9 +71,7 @@ void GameRender() {
     Renderer* renderer = &context->renderer;
     RenderQueue* queue = &context->renderQueue;
 
-    DrawQuad(queue, V2(1.5f), V2(3.0f), 0.1f, V4(1.0f, 1.0f, 1.0f, 1.0f));
-    DrawQuad(queue, V2(0.0f), V2(2.0f), 0.2f, V4(1.0f, 1.0f, 0.0f, 1.0f));
-    DrawQuad(queue, V2(2.0f), V2(4.0f), 1.0f, V4(0.0f, 0.0f, 1.0f, 1.0f));
+    context->physicSolver.DebugDraw(queue);
 
     RendererBeginFrame(renderer);
     RendererDraw(renderer, queue);

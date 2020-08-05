@@ -445,6 +445,18 @@ SquareMatrix<Size> Transpose(SquareMatrix<Size> m) {
     return result;
 }
 
+m3x3 Translate(v2 offset) {
+    m3x3 result = {};
+    result._11 = 1.0f;
+    result._22 = 1.0f;
+    result._33 = 1.0f;
+
+    result._13 = offset.x;
+    result._23 = offset.y;
+
+    return result;
+}
+
 m4x4 Translate(v3 offset) {
     m4x4 result = {};
     result._11 = 1.0f;

@@ -37,7 +37,7 @@ OpenGLLoadResult SDLLoadOpenGL() {
         log_print("[OpenGL] Failed to load some of OpenGL functions\n");
     }
 
-    if (SDL_GL_ExtensionSupported("GL_ARB_debug_output")) {
+    /*if (SDL_GL_ExtensionSupported("GL_ARB_debug_output")) {
         PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallbackARB = (PFNGLDEBUGMESSAGECALLBACKPROC)SDL_GL_GetProcAddress("glDebugMessageCallbackARB");
         PFNGLDEBUGMESSAGECONTROLPROC glDebugMessageControlARB = (PFNGLDEBUGMESSAGECONTROLPROC)SDL_GL_GetProcAddress("glDebugMessageControlARB");
         if (glDebugMessageCallbackARB && glDebugMessageControlARB) {
@@ -47,7 +47,7 @@ OpenGLLoadResult SDLLoadOpenGL() {
             glDebugMessageCallbackARB(OpenglDebugCallback, 0);
         }
     }
-
+*/
     return {context, success};
 }
 

@@ -7,6 +7,8 @@
 
 namespace Physics
 {
+    f32 CONTACT_DISTANCE_EPSILON = 0.05;
+
     class Contact
     {
     private:
@@ -18,6 +20,11 @@ namespace Physics
         BodyFeature firstCurrentFeature;
         BodyFeature secondCurrentFeature;
 
+        f32 TOI; // Time Of Impact
+        f32 distance;
+        f32 relativeSpeed;
+
+        // TODO: refactor me!!!
         bool tryUpdateCurrentFeature(const Body* const currentBody, BodyFeature& currentFeature,
                                   const Body* const otherBody, BodyFeature& otherFeature)
         {
@@ -26,9 +33,24 @@ namespace Physics
             {
                 if (otherFeature.isPoint)
                 {
-                    const v3 currentPoint = otherBody->GetFirstPointPosition(otherFeature);
-                    while (currentBody->TryUpdateToNextFeature(currentFeature, currentPoint)){ somethingUpdated = true; };
-                    while (currentBody->TryUpdateToPreviousFeature(currentFeature, currentPoint)){ somethingUpdated = true; };
+                    const v3 otherPoint = otherBody->GetFirstPointPosition(otherFeature);
+
+                    while (currentBody->TryUpdateToNextFeature(currentFeature, otherPoint))
+                    {
+                        somethingUpdated = true;
+                    }
+                    while (currentBody->TryUpdateToPreviousFeature(currentFeature, otherPoint))
+                    {
+                        somethingUpdated = true;
+                    }
+
+                    const v3 thisPoint = currentFeature.isPoint ?
+                        currentBody->GetFirstPointPosition(currentFeature) : currentBody->GetPointNearestToOther(currentFeature, otherPoint);
+                    v3 contactVector = otherPoint - thisPoint;
+                    distance = Length(contactVector);
+                    contactVector /= distance;
+                    relativeSpeed = Dot(contactVector.xy, currentBody->GetVelocity()) +
+                                    Dot(-contactVector.xy, otherBody->GetVelocity());
                     return somethingUpdated;
                 }
 
@@ -36,8 +58,9 @@ namespace Physics
                 {
                     if (currentFeature.isPoint)
                     {
-                        const v3 nearestPoint =
-                            otherBody->GetPointNearestToOther(otherFeature, currentBody->GetFirstPointPosition(currentFeature));
+                        const v3 currentPoint = currentBody->GetFirstPointPosition(currentFeature);
+                        const v3 nearestPoint = 
+                            otherBody->GetPointNearestToOther(otherFeature, currentPoint);
 
                         if (currentBody->TryUpdateToNextFeature(currentFeature, nearestPoint) ||
                             currentBody->TryUpdateToPreviousFeature(currentFeature, nearestPoint))
@@ -47,41 +70,68 @@ namespace Physics
                         }
                         else
                         {
+                            v3 contactVector = nearestPoint - currentPoint;
+                            distance = Length(contactVector);
+                            contactVector /= distance;
+                            relativeSpeed = Dot(contactVector.xy, currentBody->GetVelocity()) +
+                                    Dot(-contactVector.xy, otherBody->GetVelocity());
+
                             return somethingUpdated;
                         }
                     }
                     else
                     {
-                        somethingUpdated = true;
-
                         const v3 firstOtherPoint = otherBody->GetFirstPointPosition(otherFeature);
                         const v3 secondOtherPoint = otherBody->GetSecondPointPosition(otherFeature);
                         const v3 firstThisPoint = currentBody->GetFirstPointPosition(currentFeature);
                         const v3 secondThisPoint = currentBody->GetSecondPointPosition(currentFeature);
 
-                        int distCase = 1;
-                        f32 minDist = Dist(currentBody->GetPointNearestToOther(currentFeature, firstOtherPoint), firstOtherPoint);
+                        v3 thisFeatureVector = secondThisPoint - firstThisPoint;
+                        v3 otherFeatureVector = secondOtherPoint - firstOtherPoint;
+                        v3 thisToOtherVector = firstOtherPoint - firstThisPoint;
 
-                        f32 possibleDist = Dist(currentBody->GetPointNearestToOther(currentFeature, secondOtherPoint), secondOtherPoint);
+                        int distCase = 1;
+                        v3 contactVector = firstOtherPoint - currentBody->GetPointNearestToOther(currentFeature, firstOtherPoint);
+                        f32 minDist = Length(contactVector);
+
+                        f32 possibleDist = Length(currentBody->GetPointNearestToOther(currentFeature, secondOtherPoint) - secondOtherPoint);
                         if (possibleDist < minDist)
                         {
                             distCase = 2;
                             minDist = possibleDist;
+                            contactVector = secondOtherPoint - currentBody->GetPointNearestToOther(currentFeature, secondOtherPoint);
                         }
 
-                        possibleDist = Dist(otherBody->GetPointNearestToOther(otherFeature, firstThisPoint), firstThisPoint);
+                        possibleDist = Length(otherBody->GetPointNearestToOther(otherFeature, firstThisPoint) - firstThisPoint);
                         if (possibleDist < minDist)
                         {
                             distCase = 3;
                             minDist = possibleDist;
+                            contactVector = otherBody->GetPointNearestToOther(otherFeature, firstThisPoint) - firstThisPoint;
                         }
 
-                        possibleDist = Dist(otherBody->GetPointNearestToOther(otherFeature, secondThisPoint), secondThisPoint);
+                        possibleDist = Length(otherBody->GetPointNearestToOther(otherFeature, secondThisPoint) - secondThisPoint);
                         if (possibleDist < minDist)
                         {
                             distCase = 4;
                             minDist = possibleDist;
+                            contactVector = otherBody->GetPointNearestToOther(otherFeature, secondThisPoint) - secondThisPoint;
                         }
+
+                        // features are parallel case
+                        // TODO: epsilon shouldn't be random
+                        if (abs(thisFeatureVector.x * otherFeatureVector.y - thisFeatureVector.y * otherFeatureVector.x) < 0.01 &&
+                            thisToOtherVector.x * thisFeatureVector.y - thisToOtherVector.y * thisFeatureVector.x < F32::Eps &&
+                            otherFeatureVector.x * thisToOtherVector.y - otherFeatureVector.y * thisToOtherVector.x < F32::Eps)
+                        {
+                            distance = minDist;
+                            contactVector /= distance;
+                            relativeSpeed = Dot(contactVector.xy, currentBody->GetVelocity()) +
+                                    Dot(-contactVector.xy, otherBody->GetVelocity());
+                            return somethingUpdated;
+                        }
+
+                        somethingUpdated = true;
                         
                         switch (distCase)
                         {
@@ -109,37 +159,52 @@ namespace Physics
             firstBody(a),
             secondBody(b), 
             firstCurrentFeature(a->GetRandomFeature()),
-            secondCurrentFeature(b->GetRandomFeature())
+            secondCurrentFeature(b->GetRandomFeature()),
+            TOI(0.0)
         {
         };
+
+        f32 GetTOI() const
+        {
+            return TOI;
+        }
 
         // Lin-Canny algorithm is used here
-        void UpdateCurrentFeatures()
+        void Update()
         {
+            firstBody->AdvanceToTime(TOI);
+            secondBody->AdvanceToTime(TOI);
+
             while (tryUpdateCurrentFeature(firstBody, firstCurrentFeature, secondBody, secondCurrentFeature) |
                    tryUpdateCurrentFeature(secondBody, secondCurrentFeature, firstBody, firstCurrentFeature)) {}
+
+            if (distance < CONTACT_DISTANCE_EPSILON && relativeSpeed > 0.0)
+            {
+                v2 firstVelocity = firstBody->GetVelocity();
+                firstBody->SetVelocity(secondBody->GetVelocity());
+                secondBody->SetVelocity(firstVelocity);
+                TOI = -1.0;
+            }
+            else
+            {
+                TOI += distance / relativeSpeed;
+            }
         };
 
-
-        void printDebug(const char* name)
+        inline bool operator<(const Contact& other) const
         {
-            v3 one = firstBody->GetFirstPointPosition(firstCurrentFeature);
-            std::cout << name << ": firstBody feature coordinates are (" << one.x << "; " << one.y << ")";
-            if (!firstCurrentFeature.isPoint)
-            {
-                one = firstBody->GetSecondPointPosition(firstCurrentFeature);
-                std::cout << " and (" << one.x << "; " << one.y << ")";
-            }
-            std::cout << std::endl;
+            return this->TOI > other.TOI;
+        }
 
-            one = secondBody->GetFirstPointPosition(secondCurrentFeature);
-            std::cout << '\t' << "secondBody feature coordinates are (" << one.x << "; " << one.y << ")";
-            if (!secondCurrentFeature.isPoint)
-            {
-                one = secondBody->GetSecondPointPosition(secondCurrentFeature);
-                std::cout << " and (" << one.x << "; " << one.y << ")";
-            }
-            std::cout << std::endl;
+        void Draw(RenderQueue* queue) const
+        {
+            v3 firstPoint = firstBody->GetFirstPointPosition(firstCurrentFeature);
+            v3 secondPoint = !firstCurrentFeature.isPoint ? firstBody->GetSecondPointPosition(firstCurrentFeature) : firstPoint;
+            DrawLine(queue, firstPoint, secondPoint, {1.0, 0.0, 0.0, 1.0});
+
+            firstPoint = secondBody->GetFirstPointPosition(secondCurrentFeature);
+            secondPoint = !secondCurrentFeature.isPoint ? secondBody->GetSecondPointPosition(secondCurrentFeature) : firstPoint;
+            DrawLine(queue, firstPoint, secondPoint, {1.0, 0.0, 0.0, 1.0});
         }
     };
 };

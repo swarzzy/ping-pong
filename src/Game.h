@@ -1,5 +1,7 @@
 #pragma once
 
+#include "physics/Solver.h"
+
 #include "Common.h"
 #include "Platform.h"
 
@@ -8,6 +10,7 @@
 
 // NOTE: All global game stuff lives here
 struct GameContext {
+    Physics::Solver physicSolver;
     RenderQueue renderQueue;
     Renderer renderer;
     // Dummy stuff for demonstration how everything works
