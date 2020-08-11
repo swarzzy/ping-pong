@@ -25,11 +25,10 @@ namespace Physics
         friend class ConvexBody;
         Containers::Array<v3>::ConstIterator pointIterator;
 
-        BodyFeature(Containers::Array<v3>::ConstIterator it, bool isP)
-        {
-             isPoint = isP;
-             pointIterator = it;
-        }
+        BodyFeature(Containers::Array<v3>::ConstIterator it, bool isP) :
+             isPoint(isP),
+             pointIterator(it)
+        {}
     };
 
     class Body

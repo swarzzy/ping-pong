@@ -21,8 +21,131 @@ namespace Containers
         }
 
     public:
-        typedef T* Iterator;
-        typedef const T* ConstIterator;
+        struct Iterator
+        {
+        private:
+            i32 index;
+            Array<T>* array;
+
+        public:
+            Iterator() : array(nullptr), index(-1){};
+            Iterator(Array<T>* a, i32 ind) : array(a), index(ind){};
+
+            T& operator*()
+            {
+                assert(index >= 0);
+                assert(index < array->Size());
+
+                return array->operator[](index);
+            }
+
+            bool operator!=(const Iterator& other) const
+            {
+                return index != other.index;
+            }
+
+            bool operator==(const Iterator& other) const
+            {
+                return index == other.index;
+            }
+
+            void operator++()
+            {
+                ++index;
+            }
+
+            Iterator operator+(i32 x)
+            {
+                return {array, index + x};
+            }
+
+            Iterator operator-(i32 x)
+            {
+                return {array, index - x};
+            }
+
+            T* operator->()
+            {
+                return &array->operator[](index);
+            }
+
+            bool operator==(const T* other) const
+            {
+                if (array == nullptr)
+                {
+                    return other == nullptr;
+                }
+                return &(array->operator[](index)) == other;
+            }
+
+            bool operator!=(const T* other) const
+            {
+                return !(*this == other);
+            }
+        };
+
+        struct ConstIterator
+        {
+        private:
+            i32 index;
+            const Array<T>* array;
+
+        public:
+            ConstIterator() : array(nullptr), index(-1){};
+            ConstIterator(const Array<T>* a, i32 ind) : array(a), index(ind){};
+
+            const T& operator*() const
+            {
+                assert(index >= 0);
+                assert(index < array->Size());
+
+                return array->operator[](index);
+            }
+
+            bool operator!=(ConstIterator other) const
+            {
+                return index != other.index;
+            }
+
+            bool operator==(ConstIterator other) const
+            {
+                return index == other.index;
+            }
+
+            void operator++()
+            {
+                ++index;
+            }
+
+            ConstIterator operator+(i32 x)
+            {
+                return {array, index + x};
+            }
+
+            ConstIterator operator-(i32 x)
+            {
+                return {array, index - x};
+            }
+
+            const T* operator->() const
+            {
+                return &array->operator[](index);
+            }
+
+            bool operator==(const T* other) const
+            {
+                if (array == nullptr)
+                {
+                    return other == nullptr;
+                }
+                return &(array->operator[](index)) == other;
+            }
+
+            bool operator!=(const T* other) const
+            {
+                return !(*this == other);
+            }
+        };
 
         Array(const Array<T>& other) : size(other.size), allocatedSize(other.allocatedSize)
         {
@@ -46,7 +169,7 @@ namespace Containers
 
         ~Array()
         {
-            for (T* iterator = this->begin(); iterator != this->end(); ++iterator)
+            for (Iterator iterator = this->begin(); iterator != this->end(); ++iterator)
             {
                 iterator->~T();
             }
@@ -129,22 +252,22 @@ namespace Containers
 
         Iterator begin()
         {
-            return data;
+            return {this, 0};
         }
 
         Iterator end()
         {
-            return data + size;
+            return {this, size};
         }
 
         ConstIterator begin() const
         {
-            return data;
+            return {this, 0};
         }
 
         ConstIterator end() const
         {
-            return data + size;
+            return {this, size};
         }
     };
 }

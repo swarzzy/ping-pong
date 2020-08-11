@@ -2,6 +2,8 @@
 #include "physics/Solver.h"
 #include <iostream>
 
+#include "containers/BSTree.h"
+
 void GameInit() {
     GameContext* context = GetContext();
 
@@ -9,6 +11,30 @@ void GameInit() {
 
     RendererInit(&context->renderer);
     RenderQueueInit(&context->renderQueue, 1024);
+
+    Containers::BSTree<float> tree([](const float& a, const float& b){ return a > b;});
+
+    tree.Insert(1.0);
+    tree.Insert(-10.0);
+    tree.Insert(12.2);
+    Containers::BSTree<float>::Iterator it1 = tree.Insert(98.2);
+    tree.Insert(0.0);
+    tree.Insert(1.0);
+
+    std::cout << tree.Top() << std::endl;
+
+    tree.Insert(1.0);
+    tree.Remove(it1);
+
+    std::cout << tree.Top() << std::endl;
+
+    tree.Insert(122222.0);
+    tree.Insert(-123121.0);
+    tree.Insert(1.1231);
+    tree.Insert(-0.1);
+    tree.Insert(23.0);
+
+    std::cout << tree.Top() << std::endl;
 
     renderer->canvas.clearColor = V4(1.0f, 0.4f, 0.0f, 1.0f);
     renderer->canvas.projection = OrthoGLRH(-100.0f, 100.0f, -100.0f, 100.0f, 0.0f, 1.0f);
